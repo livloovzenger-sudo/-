@@ -1,0 +1,2628 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>בלפור גרנד סטרטגי — סימולטור הבחירות הגדול</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700;800&family=Rubik:wght@300;400;500;700;900&display=swap');
+:root {
+  --bg-void: #020617;
+  --bg-deep: #0a0f1e;
+  --bg-card: #0f172a;
+  --bg-panel: #111827;
+  --bg-input: #1e293b;
+  --bg-hover: #243048;
+  --border-dim: #1e3a5f;
+  --border-bright: #2563eb44;
+  --border-glow: #3b82f680;
+  --text-main: #e2e8f0;
+  --text-dim: #94a3b8;
+  --text-muted: #64748b;
+  --neon-blue: #38bdf8;
+  --neon-cyan: #22d3ee;
+  --neon-green: #10b981;
+  --neon-amber: #f59e0b;
+  --neon-red: #ef4444;
+  --neon-purple: #a78bfa;
+  --neon-pink: #f472b6;
+  --neon-orange: #fb923c;
+  --primary: #2563eb;
+  --primary-dim: #1d4ed8;
+  --success: #059669;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --likud: #1166cc;
+  --labor: #cc2222;
+  --shas: #883300;
+  --hadash: #cc3322;
+  --yesh: #ff6600;
+  --ych: #002299;
+  --degel: #000066;
+  --avoda: #cc0000;
+  --meretz: #00aa55;
+  --bibi: #1e3a8a;
+  --glow-blue: 0 0 20px #2563eb55, 0 0 40px #2563eb22;
+  --glow-green: 0 0 20px #10b98155, 0 0 40px #10b98122;
+  --glow-red: 0 0 20px #ef444455, 0 0 40px #ef444422;
+  --glow-amber: 0 0 20px #f59e0b55;
+  --ff-main: 'Rubik', 'Assistant', system-ui, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; scroll-behavior: smooth; }
+body {
+  font-family: var(--ff-main);
+  background: var(--bg-void);
+  color: var(--text-main);
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.5;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background: radial-gradient(ellipse at 20% 20%, #0d1b3e44 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 80%, #0d2b1e22 0%, transparent 60%);
+  pointer-events: none; z-index: 0;
+}
+
+/* === SETUP SCREEN === */
+#setup-screen {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; min-height: 100vh; padding: 20px;
+  position: relative; z-index: 1;
+}
+.setup-hero {
+  text-align: center; margin-bottom: 40px;
+}
+.setup-hero h1 {
+  font-size: 3rem; font-weight: 900; letter-spacing: -1px;
+  background: linear-gradient(135deg, #38bdf8, #2563eb, #a78bfa);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: none; line-height: 1.1; margin-bottom: 12px;
+}
+.setup-hero p { color: var(--text-dim); font-size: 1.1rem; }
+.setup-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-dim);
+  border-radius: 16px; padding: 36px;
+  width: 100%; max-width: 680px;
+  box-shadow: var(--glow-blue);
+}
+.form-row { margin-bottom: 20px; }
+.form-row label {
+  display: block; font-weight: 600; color: var(--neon-blue);
+  margin-bottom: 8px; font-size: 0.9rem; letter-spacing: 0.5px;
+}
+select, input[type=text] {
+  width: 100%; padding: 12px 16px;
+  background: var(--bg-input); color: var(--text-main);
+  border: 1px solid var(--border-dim); border-radius: 8px;
+  font-family: var(--ff-main); font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  appearance: none; cursor: pointer;
+}
+select:focus, input:focus {
+  outline: none; border-color: var(--neon-blue);
+  box-shadow: 0 0 0 2px #38bdf822;
+}
+.arena-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+.arena-btn {
+  padding: 20px; border: 2px solid var(--border-dim);
+  border-radius: 12px; background: var(--bg-deep);
+  cursor: pointer; transition: all 0.2s; text-align: center;
+  font-family: var(--ff-main);
+}
+.arena-btn:hover { border-color: var(--neon-blue); background: var(--bg-input); }
+.arena-btn.active { border-color: var(--neon-blue); background: #1e3a5f; box-shadow: var(--glow-blue); }
+.arena-btn .flag { font-size: 2.5rem; display: block; margin-bottom: 8px; }
+.arena-btn .label { font-weight: 700; font-size: 1rem; color: var(--text-main); }
+.arena-btn .sublabel { font-size: 0.75rem; color: var(--text-dim); margin-top: 4px; }
+.start-btn {
+  width: 100%; padding: 18px; font-size: 1.2rem; font-weight: 800;
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  color: white; border: none; border-radius: 10px; cursor: pointer;
+  transition: all 0.2s; font-family: var(--ff-main);
+  box-shadow: var(--glow-blue); letter-spacing: 0.5px;
+}
+.start-btn:hover { transform: translateY(-2px); box-shadow: 0 0 30px #2563eb88; }
+.difficulty-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+.diff-btn {
+  padding: 10px; border: 1px solid var(--border-dim);
+  border-radius: 8px; background: var(--bg-deep);
+  cursor: pointer; text-align: center; font-family: var(--ff-main);
+  transition: all 0.2s; color: var(--text-dim); font-size: 0.85rem;
+}
+.diff-btn.active { border-color: var(--neon-green); color: var(--neon-green); background: #0d2b1e; }
+
+/* === MAIN GAME SCREEN === */
+#game-screen { display: none; position: relative; z-index: 1; }
+
+/* TOP BAR */
+.topbar {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  padding: 10px 16px;
+  background: var(--bg-deep);
+  border-bottom: 1px solid var(--border-dim);
+  position: sticky; top: 0; z-index: 100;
+  gap: 16px;
+}
+.topbar-brand {
+  display: flex; align-items: center; gap: 10px;
+}
+.topbar-brand .logo {
+  font-size: 1.4rem; font-weight: 900;
+  background: linear-gradient(135deg, #38bdf8, #a78bfa);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; white-space: nowrap;
+}
+.topbar-brand .subtitle { font-size: 0.7rem; color: var(--text-muted); }
+.ticker-resources {
+  display: flex; gap: 8px; overflow-x: auto;
+  justify-content: center; flex-wrap: wrap;
+}
+.resource-chip {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--bg-input); border: 1px solid var(--border-dim);
+  border-radius: 20px; padding: 5px 12px; white-space: nowrap;
+  font-size: 0.8rem;
+}
+.resource-chip .rc-icon { font-size: 0.9rem; }
+.resource-chip .rc-val { font-weight: 700; color: var(--neon-blue); }
+.resource-chip .rc-label { color: var(--text-muted); font-size: 0.7rem; }
+.resource-chip.danger .rc-val { color: var(--neon-red); }
+.resource-chip.success .rc-val { color: var(--neon-green); }
+.resource-chip.warning .rc-val { color: var(--neon-amber); }
+.topbar-controls { display: flex; gap: 8px; align-items: center; }
+.btn-advance {
+  padding: 8px 16px; font-size: 0.85rem; font-weight: 700;
+  background: linear-gradient(135deg, #059669, #047857);
+  color: white; border: none; border-radius: 8px; cursor: pointer;
+  transition: all 0.2s; font-family: var(--ff-main);
+  white-space: nowrap;
+}
+.btn-advance:hover { filter: brightness(1.2); box-shadow: var(--glow-green); }
+.btn-sm {
+  padding: 7px 14px; font-size: 0.8rem; font-weight: 600;
+  background: var(--bg-input); color: var(--text-dim);
+  border: 1px solid var(--border-dim); border-radius: 8px;
+  cursor: pointer; transition: all 0.2s; font-family: var(--ff-main);
+}
+.btn-sm:hover { border-color: var(--neon-blue); color: var(--neon-blue); }
+
+/* NEWS FLASH */
+.news-flash-bar {
+  background: var(--bg-deep); border-bottom: 1px solid #f59e0b44;
+  padding: 6px 16px; display: flex; align-items: center; gap: 10px;
+  overflow: hidden;
+}
+.news-tag {
+  background: var(--neon-amber); color: #000; font-weight: 800;
+  font-size: 0.7rem; padding: 2px 8px; border-radius: 4px;
+  white-space: nowrap; flex-shrink: 0;
+}
+.news-scroll {
+  font-size: 0.82rem; color: var(--text-dim);
+  white-space: nowrap; overflow: hidden;
+  animation: scrollnews 35s linear infinite;
+}
+@keyframes scrollnews {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100vw); }
+}
+
+/* MAIN GAME LAYOUT */
+.game-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr 300px;
+  gap: 0;
+  height: calc(100vh - 72px);
+  overflow: hidden;
+}
+@media (max-width: 1200px) {
+  .game-layout { grid-template-columns: 240px 1fr 260px; }
+}
+@media (max-width: 900px) {
+  .game-layout { grid-template-columns: 1fr; height: auto; overflow: visible; }
+}
+
+/* PANELS */
+.panel-left, .panel-center, .panel-right {
+  overflow-y: auto; height: 100%;
+  scrollbar-width: thin; scrollbar-color: var(--border-dim) transparent;
+}
+.panel-left { border-left: 1px solid var(--border-dim); background: var(--bg-panel); }
+.panel-right { border-right: 1px solid var(--border-dim); background: var(--bg-panel); }
+.panel-center { background: var(--bg-deep); }
+
+.panel-section {
+  border-bottom: 1px solid var(--border-dim); padding: 14px;
+}
+.panel-section-title {
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 1.5px;
+  color: var(--text-muted); text-transform: uppercase;
+  margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+}
+.panel-section-title .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--neon-blue); flex-shrink: 0;
+}
+
+/* PARTY BAR */
+.party-row {
+  margin-bottom: 8px; cursor: pointer;
+  transition: background 0.15s; border-radius: 6px; padding: 4px 0;
+}
+.party-row:hover { background: var(--bg-hover); }
+.party-meta {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-bottom: 4px; padding: 0 4px;
+}
+.party-name { font-size: 0.82rem; font-weight: 600; color: var(--text-main); }
+.party-seats {
+  font-size: 0.75rem; font-weight: 700;
+  color: var(--neon-blue); background: var(--bg-input);
+  padding: 1px 7px; border-radius: 10px;
+}
+.party-bar-track {
+  height: 6px; background: var(--bg-input); border-radius: 3px; overflow: hidden;
+}
+.party-bar-fill {
+  height: 100%; border-radius: 3px;
+  transition: width 0.6s ease; min-width: 2px;
+}
+.party-trend {
+  font-size: 0.65rem; color: var(--text-muted); padding: 0 4px; margin-top: 2px;
+}
+.trend-up { color: var(--neon-green) !important; }
+.trend-down { color: var(--neon-red) !important; }
+
+/* ECONOMIC INDICATORS */
+.eco-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.eco-cell {
+  background: var(--bg-input); border-radius: 8px; padding: 10px;
+  border: 1px solid var(--border-dim);
+}
+.eco-cell .eco-val {
+  font-size: 1.2rem; font-weight: 800;
+  color: var(--neon-blue); display: block;
+}
+.eco-cell .eco-label {
+  font-size: 0.65rem; color: var(--text-muted); margin-top: 2px;
+}
+.eco-cell.good .eco-val { color: var(--neon-green); }
+.eco-cell.bad .eco-val { color: var(--neon-red); }
+.eco-cell.warn .eco-val { color: var(--neon-amber); }
+
+/* SECURITY GAUGE */
+.security-bar {
+  height: 8px; border-radius: 4px; overflow: hidden;
+  background: var(--bg-input); margin-top: 6px;
+}
+.security-fill {
+  height: 100%; border-radius: 4px;
+  transition: width 0.5s, background 0.5s;
+}
+
+/* POLLING TABLE */
+.poll-table { width: 100%; font-size: 0.75rem; border-collapse: collapse; }
+.poll-table th {
+  color: var(--text-muted); font-weight: 600;
+  padding: 4px 6px; text-align: right;
+  border-bottom: 1px solid var(--border-dim);
+}
+.poll-table td { padding: 5px 6px; color: var(--text-main); }
+.poll-table tr:hover td { background: var(--bg-hover); }
+
+/* CENTER PANEL — TABS */
+.center-tabs {
+  display: flex; gap: 0;
+  border-bottom: 1px solid var(--border-dim);
+  background: var(--bg-panel);
+  position: sticky; top: 0; z-index: 10;
+}
+.ctab {
+  padding: 12px 18px; font-size: 0.82rem; font-weight: 600;
+  color: var(--text-muted); cursor: pointer; transition: all 0.2s;
+  border-bottom: 2px solid transparent; background: none; border-top: none;
+  border-left: none; border-right: none; font-family: var(--ff-main);
+  white-space: nowrap;
+}
+.ctab:hover { color: var(--text-main); background: var(--bg-hover); }
+.ctab.active { color: var(--neon-blue); border-bottom-color: var(--neon-blue); }
+
+/* CENTER CONTENT */
+.center-body { padding: 16px; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* EVENT CARD */
+.event-card {
+  background: var(--bg-card); border: 1px solid var(--border-bright);
+  border-right: 3px solid var(--neon-blue);
+  border-radius: 10px; padding: 16px; margin-bottom: 14px;
+  animation: slidein 0.3s ease;
+}
+@keyframes slidein {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.event-card.crisis { border-right-color: var(--neon-red); }
+.event-card.opportunity { border-right-color: var(--neon-green); }
+.event-card.scandal { border-right-color: var(--neon-amber); }
+.event-card.geopolitical { border-right-color: var(--neon-purple); }
+.event-title {
+  font-weight: 700; font-size: 0.95rem; margin-bottom: 6px;
+  color: var(--text-main);
+}
+.event-body { font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; margin-bottom: 12px; }
+.event-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.event-btn {
+  padding: 9px 12px; font-size: 0.8rem; font-weight: 600;
+  background: var(--bg-input); color: var(--text-main);
+  border: 1px solid var(--border-dim); border-radius: 7px;
+  cursor: pointer; transition: all 0.2s; font-family: var(--ff-main);
+  text-align: right;
+}
+.event-btn:hover { border-color: var(--neon-blue); background: var(--bg-hover); }
+.event-btn .cost {
+  font-size: 0.68rem; color: var(--text-muted); display: block; margin-top: 2px;
+}
+
+/* ACTION GRID */
+.action-category { margin-bottom: 18px; }
+.action-category-title {
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 2px;
+  color: var(--neon-blue); text-transform: uppercase; margin-bottom: 10px;
+  padding-bottom: 6px; border-bottom: 1px solid var(--border-dim);
+}
+.action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.action-btn {
+  padding: 12px; background: var(--bg-card); border: 1px solid var(--border-dim);
+  border-radius: 9px; cursor: pointer; transition: all 0.2s;
+  font-family: var(--ff-main); text-align: right; color: var(--text-main);
+}
+.action-btn:hover { border-color: var(--neon-blue); background: var(--bg-hover); transform: translateY(-1px); }
+.action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.action-btn .aicon { font-size: 1.3rem; display: block; margin-bottom: 5px; }
+.action-btn .aname { font-size: 0.82rem; font-weight: 700; display: block; margin-bottom: 3px; }
+.action-btn .acost { font-size: 0.7rem; color: var(--neon-amber); }
+.action-btn .aeffect { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
+
+/* LOG FEED */
+.log-feed { font-size: 0.78rem; }
+.log-entry {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 8px 0; border-bottom: 1px solid var(--border-dim);
+}
+.log-time { color: var(--text-muted); white-space: nowrap; flex-shrink: 0; font-size: 0.7rem; }
+.log-tag {
+  padding: 1px 6px; border-radius: 10px; font-size: 0.65rem;
+  font-weight: 700; white-space: nowrap; flex-shrink: 0; margin-top: 1px;
+}
+.log-tag.economy { background: #1e3a5f; color: var(--neon-blue); }
+.log-tag.security { background: #3b1d1d; color: var(--neon-red); }
+.log-tag.media { background: #1a2e1a; color: var(--neon-green); }
+.log-tag.coalition { background: #2d1f4e; color: var(--neon-purple); }
+.log-tag.field { background: #2d2000; color: var(--neon-amber); }
+.log-tag.event { background: #0d2b2b; color: var(--neon-cyan); }
+.log-msg { color: var(--text-dim); line-height: 1.4; }
+
+/* COALITION INTERFACE */
+.coalition-grid { display: grid; gap: 10px; }
+.coalition-row {
+  background: var(--bg-card); border: 1px solid var(--border-dim);
+  border-radius: 10px; padding: 12px; transition: all 0.2s;
+}
+.coalition-row:hover { border-color: var(--border-glow); }
+.coalition-row .party-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 8px;
+}
+.coalition-row .party-hname { font-weight: 700; font-size: 0.9rem; }
+.coalition-row .party-hseats {
+  background: var(--bg-input); border-radius: 6px;
+  padding: 2px 10px; font-size: 0.8rem; font-weight: 700;
+}
+.coalition-row .demands { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 10px; }
+.coalition-row .demands span { color: var(--neon-amber); }
+.coalition-controls { display: flex; gap: 8px; align-items: center; }
+.coaltion-status-badge {
+  padding: 3px 10px; border-radius: 10px; font-size: 0.72rem; font-weight: 700;
+}
+.status-negotiating { background: #1e3a5f; color: var(--neon-blue); }
+.status-joined { background: #0d2b1e; color: var(--neon-green); }
+.status-refused { background: #3b1d1d; color: var(--neon-red); }
+.status-pending { background: #2d2000; color: var(--neon-amber); }
+.btn-negotiate {
+  padding: 5px 12px; font-size: 0.75rem; font-weight: 600;
+  background: var(--primary); color: white; border: none;
+  border-radius: 6px; cursor: pointer; font-family: var(--ff-main);
+  transition: all 0.2s;
+}
+.btn-negotiate:hover { filter: brightness(1.2); }
+.btn-negotiate:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* MK ROSTER */
+.mk-list { display: grid; gap: 6px; }
+.mk-card {
+  background: var(--bg-input); border: 1px solid var(--border-dim);
+  border-radius: 8px; padding: 9px 12px; transition: all 0.2s;
+  cursor: pointer;
+}
+.mk-card:hover { border-color: var(--border-glow); background: var(--bg-hover); }
+.mk-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.mk-name { font-weight: 700; font-size: 0.82rem; color: var(--text-main); }
+.mk-party-badge {
+  font-size: 0.65rem; padding: 1px 7px; border-radius: 10px;
+  background: var(--bg-card); color: var(--text-dim); border: 1px solid var(--border-dim);
+}
+.mk-role { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 6px; }
+.mk-stats { display: flex; gap: 8px; flex-wrap: wrap; }
+.mk-stat {
+  font-size: 0.68rem; color: var(--text-muted);
+}
+.mk-stat span { color: var(--text-main); font-weight: 600; }
+.loyalty-bar-mini {
+  height: 3px; background: var(--bg-card); border-radius: 2px;
+  overflow: hidden; margin-top: 5px;
+}
+.loyalty-fill { height: 100%; background: var(--neon-green); border-radius: 2px; transition: width 0.4s; }
+
+/* COMMENTATOR */
+.comment-card {
+  background: var(--bg-input); border: 1px solid var(--border-dim);
+  border-radius: 9px; padding: 12px; margin-bottom: 8px; animation: slidein 0.3s;
+}
+.comment-meta { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+.comment-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; font-weight: 700; flex-shrink: 0;
+}
+.comment-name { font-weight: 700; font-size: 0.82rem; }
+.comment-channel { font-size: 0.68rem; color: var(--text-muted); }
+.comment-text { font-size: 0.8rem; color: var(--text-dim); line-height: 1.5; }
+.comment-sentiment {
+  font-size: 0.68rem; margin-top: 6px; padding: 2px 8px;
+  border-radius: 10px; display: inline-block; font-weight: 600;
+}
+.sentiment-pos { background: #0d2b1e; color: var(--neon-green); }
+.sentiment-neg { background: #3b1d1d; color: var(--neon-red); }
+.sentiment-neu { background: var(--bg-card); color: var(--text-muted); }
+
+/* CITY MAP */
+.city-grid { display: grid; gap: 6px; }
+.city-row {
+  background: var(--bg-input); border: 1px solid var(--border-dim);
+  border-radius: 8px; padding: 9px 11px; transition: all 0.15s;
+  cursor: pointer;
+}
+.city-row:hover { border-color: var(--neon-blue); }
+.city-top { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.city-name { font-weight: 700; font-size: 0.82rem; }
+.city-pop { font-size: 0.7rem; color: var(--text-muted); }
+.city-trend { font-size: 0.72rem; color: var(--text-dim); margin-bottom: 4px; }
+.city-support-bar { height: 4px; background: var(--bg-card); border-radius: 2px; overflow: hidden; }
+.city-support-fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
+
+/* MODAL */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: #000000cc; z-index: 1000;
+  align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: var(--bg-card); border: 1px solid var(--border-bright);
+  border-radius: 16px; padding: 28px;
+  max-width: 560px; width: 90%;
+  max-height: 85vh; overflow-y: auto;
+  box-shadow: var(--glow-blue);
+  animation: modalin 0.25s ease;
+}
+@keyframes modalin {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+.modal-title {
+  font-size: 1.3rem; font-weight: 800; margin-bottom: 16px;
+  background: linear-gradient(135deg, var(--neon-blue), var(--neon-cyan));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.modal-body { font-size: 0.88rem; color: var(--text-dim); line-height: 1.6; margin-bottom: 20px; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+.btn-modal-primary {
+  padding: 10px 24px; font-size: 0.9rem; font-weight: 700;
+  background: var(--primary); color: white; border: none;
+  border-radius: 8px; cursor: pointer; font-family: var(--ff-main);
+  transition: all 0.2s;
+}
+.btn-modal-primary:hover { filter: brightness(1.2); }
+.btn-modal-cancel {
+  padding: 10px 20px; font-size: 0.9rem; font-weight: 600;
+  background: transparent; color: var(--text-muted);
+  border: 1px solid var(--border-dim); border-radius: 8px;
+  cursor: pointer; font-family: var(--ff-main); transition: all 0.2s;
+}
+.btn-modal-cancel:hover { color: var(--text-main); }
+
+/* TOAST NOTIFICATIONS */
+.toast-container {
+  position: fixed; bottom: 20px; left: 20px;
+  z-index: 2000; display: flex; flex-direction: column; gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  padding: 12px 18px; border-radius: 10px;
+  font-size: 0.85rem; font-weight: 600;
+  animation: toastin 0.3s ease, toastout 0.3s ease 3.7s;
+  pointer-events: auto; max-width: 340px;
+  display: flex; align-items: center; gap: 10px;
+}
+.toast.success { background: #0d2b1e; border: 1px solid var(--neon-green); color: var(--neon-green); box-shadow: var(--glow-green); }
+.toast.error { background: #3b1d1d; border: 1px solid var(--neon-red); color: var(--neon-red); box-shadow: var(--glow-red); }
+.toast.info { background: #0d1e3b; border: 1px solid var(--neon-blue); color: var(--neon-blue); box-shadow: var(--glow-blue); }
+.toast.warn { background: #2d1e00; border: 1px solid var(--neon-amber); color: var(--neon-amber); box-shadow: var(--glow-amber); }
+@keyframes toastin { from { opacity:0; transform: translateX(-20px); } to { opacity:1; transform: translateX(0); } }
+@keyframes toastout { from { opacity:1; } to { opacity:0; } }
+
+/* ELECTION RESULTS SCREEN */
+#results-screen { display: none; min-height: 100vh; padding: 40px 20px; position: relative; z-index: 1; }
+.results-hero { text-align: center; margin-bottom: 40px; }
+.results-hero h1 { font-size: 2.5rem; font-weight: 900; margin-bottom: 10px; }
+.results-grid { display: grid; gap: 16px; max-width: 900px; margin: 0 auto; }
+.result-party-row {
+  background: var(--bg-card); border: 1px solid var(--border-dim);
+  border-radius: 12px; padding: 16px; display: flex;
+  align-items: center; gap: 16px;
+}
+.result-rank {
+  font-size: 1.8rem; font-weight: 900; color: var(--text-muted);
+  width: 40px; text-align: center; flex-shrink: 0;
+}
+.result-rank.gold { color: #f59e0b; }
+.result-rank.silver { color: #94a3b8; }
+.result-rank.bronze { color: #92400e; }
+.result-party-name { flex: 1; font-weight: 800; font-size: 1.05rem; }
+.result-pct { font-size: 1.5rem; font-weight: 900; color: var(--neon-blue); min-width: 70px; text-align: center; }
+.result-seats { font-size: 0.9rem; color: var(--text-dim); min-width: 60px; text-align: center; }
+.result-bar-track { flex: 1; height: 10px; background: var(--bg-input); border-radius: 5px; overflow: hidden; }
+.result-bar-fill { height: 100%; border-radius: 5px; }
+
+/* PROGRESS BARS */
+.progress-bar {
+  height: 4px; background: var(--bg-input); border-radius: 2px;
+  overflow: hidden; margin-top: 4px;
+}
+.progress-fill {
+  height: 100%; background: linear-gradient(90deg, var(--neon-blue), var(--neon-cyan));
+  border-radius: 2px; transition: width 0.5s ease;
+}
+
+/* MOMENTUM DISPLAY */
+.momentum-display {
+  display: flex; align-items: center; gap: 6px; margin-top: 6px;
+}
+.momentum-arrow {
+  font-size: 1.1rem; font-weight: 900;
+}
+.momentum-label { font-size: 0.72rem; color: var(--text-muted); }
+
+/* APPROVAL GAUGE */
+.approval-gauge {
+  width: 100%; height: 120px; position: relative;
+  display: flex; align-items: center; justify-content: center;
+}
+.approval-gauge canvas { max-width: 100%; }
+
+/* TABS INDICATORS */
+.tab-badge {
+  background: var(--neon-red); color: white; border-radius: 50%;
+  width: 16px; height: 16px; font-size: 0.6rem; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-right: 4px;
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-dim); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--neon-blue); }
+
+/* SEPARATORS */
+.separator { height: 1px; background: var(--border-dim); margin: 8px 0; }
+
+/* PULSE ANIMATION */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.pulse { animation: pulse 2s infinite; }
+
+/* GRID UTILITIES */
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+.gap-8 { gap: 8px; }
+
+/* APPROVAL CIRCLE */
+.approval-circle {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: conic-gradient(var(--neon-blue) 0%, var(--bg-input) 0%);
+  display: flex; align-items: center; justify-content: center;
+  position: relative; margin: 0 auto 8px;
+}
+.approval-circle::before {
+  content: ''; position: absolute; inset: 6px;
+  background: var(--bg-panel); border-radius: 50%;
+}
+.approval-val {
+  position: relative; z-index: 1;
+  font-size: 1.1rem; font-weight: 900; color: var(--neon-blue);
+}
+
+.section-title-big {
+  font-size: 1.1rem; font-weight: 800; color: var(--text-main);
+  margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+}
+
+.badge {
+  padding: 2px 8px; border-radius: 10px; font-size: 0.68rem; font-weight: 700;
+}
+.badge-blue { background: #1e3a5f; color: var(--neon-blue); }
+.badge-green { background: #0d2b1e; color: var(--neon-green); }
+.badge-red { background: #3b1d1d; color: var(--neon-red); }
+.badge-amber { background: #2d1e00; color: var(--neon-amber); }
+.badge-purple { background: #1e1040; color: var(--neon-purple); }
+
+.micro-chart {
+  display: flex; gap: 2px; align-items: flex-end; height: 30px;
+}
+.micro-bar {
+  flex: 1; background: var(--neon-blue); border-radius: 1px 1px 0 0;
+  opacity: 0.5; transition: opacity 0.2s;
+  min-height: 2px;
+}
+.micro-bar:last-child { opacity: 1; }
+
+input[type=range] {
+  width: 100%; height: 4px; -webkit-appearance: none;
+  background: var(--bg-input); border-radius: 2px; outline: none;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 14px; height: 14px;
+  border-radius: 50%; background: var(--neon-blue); cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN -->
+<div id="setup-screen">
+  <div class="setup-hero">
+    <h1>🏛️ בלפור גרנד סטרטגי</h1>
+    <p>סימולטור הבחירות הגדול — ישראל וארצות הברית</p>
+  </div>
+  <div class="setup-card">
+    <div class="form-row">
+      <label>בחר זירת בחירות</label>
+      <div class="arena-grid">
+        <div class="arena-btn active" id="arena-IL" onclick="selectArena('IL')">
+          <span class="flag">🇮🇱</span>
+          <div class="label">מדינת ישראל</div>
+          <div class="sublabel">הכנסת ה-1 עד ה-26</div>
+        </div>
+        <div class="arena-btn" id="arena-US" onclick="selectArena('US')">
+          <span class="flag">🇺🇸</span>
+          <div class="label">ארצות הברית</div>
+          <div class="sublabel">נשיאות 1 עד 60</div>
+        </div>
+      </div>
+    </div>
+    <div class="form-row">
+      <label>מערכת בחירות</label>
+      <select id="year-select"></select>
+    </div>
+    <div class="form-row">
+      <label>בחר מפלגה לניהול</label>
+      <select id="player-party-select"></select>
+    </div>
+    <div class="form-row">
+      <label>רמת קושי</label>
+      <div class="difficulty-row">
+        <div class="diff-btn active" id="diff-easy" onclick="selectDiff('easy')">🟢 קל<br><small>45 ימים • ₪8M</small></div>
+        <div class="diff-btn" id="diff-normal" onclick="selectDiff('normal')">🟡 רגיל<br><small>40 ימים • ₪5M</small></div>
+        <div class="diff-btn" id="diff-hard" onclick="selectDiff('hard')">🔴 קשה<br><small>35 ימים • ₪3M</small></div>
+      </div>
+    </div>
+    <button class="start-btn" onclick="initGame()">
+      🚀 פתח מטה בחירות והתחל קמפיין
+    </button>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="game-screen">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div>
+        <div class="logo">🏛️ בלפור GS</div>
+        <div class="subtitle" id="topbar-arena-label">הכנסת ה-25</div>
+      </div>
+    </div>
+    <div class="ticker-resources" id="resource-ticker">
+      <div class="resource-chip"><span class="rc-icon">💰</span><span class="rc-val" id="rc-cash">₪5M</span><span class="rc-label">קופה</span></div>
+      <div class="resource-chip warning"><span class="rc-icon">📅</span><span class="rc-val" id="rc-days">45</span><span class="rc-label">ימים</span></div>
+      <div class="resource-chip"><span class="rc-icon">📈</span><span class="rc-val" id="rc-approval">52%</span><span class="rc-label">תמיכה</span></div>
+      <div class="resource-chip"><span class="rc-icon">⚡</span><span class="rc-val" id="rc-momentum">+3</span><span class="rc-label">מומנטום</span></div>
+      <div class="resource-chip"><span class="rc-icon">👥</span><span class="rc-val" id="rc-volunteers">2,400</span><span class="rc-label">מתנדבים</span></div>
+      <div class="resource-chip"><span class="rc-icon">🏛️</span><span class="rc-val" id="rc-seats">0</span><span class="rc-label">מנדטים</span></div>
+    </div>
+    <div class="topbar-controls">
+      <button class="btn-sm" onclick="showModal('coalition')">קואליציה 🤝</button>
+      <button class="btn-sm" onclick="showTab('polls')">סקרים 📊</button>
+      <button class="btn-advance" onclick="advanceTurn()">⏭ יום הבא</button>
+    </div>
+  </div>
+
+  <!-- NEWS BAR -->
+  <div class="news-flash-bar">
+    <span class="news-tag">📢 חדשות</span>
+    <div class="news-scroll" id="news-scroll-text">מערכת הבחירות נפתחת — המפלגות מפרסמות את רשימות המועמדים ומטות הקמפיין מתגייסים לפעולה...</div>
+  </div>
+
+  <!-- MAIN LAYOUT -->
+  <div class="game-layout">
+    <!-- LEFT PANEL -->
+    <div class="panel-left" id="panel-left">
+      <!-- Party Standings -->
+      <div class="panel-section">
+        <div class="panel-section-title"><span class="dot"></span>עמדות המפלגות</div>
+        <div id="party-standings"></div>
+      </div>
+
+      <!-- Economic Dashboard -->
+      <div class="panel-section">
+        <div class="panel-section-title"><span class="dot" style="background:var(--neon-green)"></span>מדדים כלכליים</div>
+        <div class="eco-grid" id="eco-grid">
+          <div class="eco-cell good"><span class="eco-val" id="eco-gdp">3.2%</span><span class="eco-label">צמיחת GDP</span></div>
+          <div class="eco-cell warn"><span class="eco-val" id="eco-inf">4.1%</span><span class="eco-label">אינפלציה</span></div>
+          <div class="eco-cell good"><span class="eco-val" id="eco-unemp">4.8%</span><span class="eco-label">אבטלה</span></div>
+          <div class="eco-cell"><span class="eco-val" id="eco-rate">3.5%</span><span class="eco-label">ריבית</span></div>
+        </div>
+        <div style="margin-top:10px;">
+          <div class="panel-section-title" style="margin-bottom:6px;"><span class="dot" style="background:var(--neon-red)"></span>מדד ביטחון לאומי</div>
+          <div style="font-size:0.78rem; color:var(--text-dim); margin-bottom:4px;" id="security-label">שגרה ביטחונית</div>
+          <div class="security-bar"><div class="security-fill" id="security-fill" style="width:30%; background: var(--neon-green);"></div></div>
+        </div>
+      </div>
+
+      <!-- Approval -->
+      <div class="panel-section">
+        <div class="panel-section-title"><span class="dot" style="background:var(--neon-amber)"></span>אישור ציבורי</div>
+        <div id="approval-circle-wrap" style="text-align:center; padding: 8px 0;">
+          <div style="font-size:2.5rem; font-weight:900; color:var(--neon-blue);" id="big-approval">52%</div>
+          <div style="font-size:0.72rem; color:var(--text-muted);">תמיכה ציבורית נוכחית</div>
+          <div class="micro-chart" id="approval-micro-chart" style="margin-top:8px;"></div>
+        </div>
+        <div class="momentum-display">
+          <span class="momentum-arrow" id="momentum-arrow">↗</span>
+          <span id="momentum-val" style="font-weight:700; color:var(--neon-green);">+3</span>
+          <span class="momentum-label">נקודות מומנטום</span>
+        </div>
+      </div>
+
+      <!-- Field Control -->
+      <div class="panel-section">
+        <div class="panel-section-title"><span class="dot" style="background:var(--neon-purple)"></span>שליטה אזורית</div>
+        <div id="field-control-mini"></div>
+      </div>
+    </div>
+
+    <!-- CENTER PANEL -->
+    <div class="panel-center">
+      <div class="center-tabs" id="center-tabs">
+        <button class="ctab active" data-tab="command" onclick="showTab('command')">⚡ חמ"ל</button>
+        <button class="ctab" data-tab="polls" onclick="showTab('polls')">📊 סקרים</button>
+        <button class="ctab" data-tab="media" onclick="showTab('media')">📺 מדיה</button>
+        <button class="ctab" data-tab="field" onclick="showTab('field')">📍 שטח</button>
+        <button class="ctab" data-tab="coalition" onclick="showTab('coalition')">🤝 קואליציה</button>
+        <button class="ctab" data-tab="log" onclick="showTab('log')">📋 יומן</button>
+      </div>
+      <div class="center-body">
+        <!-- COMMAND TAB -->
+        <div class="tab-panel active" id="tab-command">
+          <div id="event-feed"></div>
+          <div class="action-category">
+            <div class="action-category-title">📺 מרכז מדיה</div>
+            <div class="action-grid">
+              <button class="action-btn" onclick="doAction('press_conf')">
+                <span class="aicon">🎤</span>
+                <span class="aname">כנס עיתונאים</span>
+                <span class="acost">₪200,000</span>
+                <span class="aeffect">+2% תמיכה, +1 מומנטום</span>
+              </button>
+              <button class="action-btn" onclick="doAction('tv_interview')">
+                <span class="aicon">📺</span>
+                <span class="aname">ראיון מרכזי</span>
+                <span class="acost">₪150,000</span>
+                <span class="aeffect">+1.5% תמיכה</span>
+              </button>
+              <button class="action-btn" onclick="doAction('digital_ads')">
+                <span class="aicon">📱</span>
+                <span class="aname">קמפיין דיגיטלי</span>
+                <span class="acost">₪300,000</span>
+                <span class="aeffect">+3% תמיכה בצעירים</span>
+              </button>
+              <button class="action-btn" onclick="doAction('attack_ad')">
+                <span class="aicon">⚔️</span>
+                <span class="aname">פרסום תקיפה</span>
+                <span class="acost">₪250,000</span>
+                <span class="aeffect">-2% ליריב, +ריסק</span>
+              </button>
+            </div>
+          </div>
+          <div class="action-category">
+            <div class="action-category-title">📍 מטות שטח</div>
+            <div class="action-grid">
+              <button class="action-btn" onclick="doAction('rally')">
+                <span class="aicon">🎉</span>
+                <span class="aname">עצרת עממית</span>
+                <span class="acost">₪400,000</span>
+                <span class="aeffect">+3% מומנטום</span>
+              </button>
+              <button class="action-btn" onclick="doAction('recruit')">
+                <span class="aicon">👥</span>
+                <span class="aname">גיוס מתנדבים</span>
+                <span class="acost">₪100,000</span>
+                <span class="aeffect">+500 מתנדבים</span>
+              </button>
+              <button class="action-btn" onclick="doAction('canvass')">
+                <span class="aicon">🚶</span>
+                <span class="aname">סיור שטח</span>
+                <span class="acost">₪180,000</span>
+                <span class="aeffect">+2% בפריפריה</span>
+              </button>
+              <button class="action-btn" onclick="doAction('office')">
+                <span class="aicon">🏢</span>
+                <span class="aname">פתח סניף</span>
+                <span class="acost">₪500,000</span>
+                <span class="aeffect">+שליטה עירונית</span>
+              </button>
+            </div>
+          </div>
+          <div class="action-category">
+            <div class="action-category-title">💼 ניהול פוליטי</div>
+            <div class="action-grid">
+              <button class="action-btn" onclick="doAction('fundraise')">
+                <span class="aicon">💰</span>
+                <span class="aname">גיוס כספים</span>
+                <span class="acost">חינם</span>
+                <span class="aeffect">+₪600,000 לקופה</span>
+              </button>
+              <button class="action-btn" onclick="doAction('opposition_research')">
+                <span class="aicon">🔍</span>
+                <span class="aname">מחקר אופוזיציה</span>
+                <span class="acost">₪350,000</span>
+                <span class="aeffect">גלה שערוריות</span>
+              </button>
+              <button class="action-btn" onclick="doAction('debate_prep')">
+                <span class="aicon">🎭</span>
+                <span class="aname">הכנה לעימות</span>
+                <span class="acost">₪100,000</span>
+                <span class="aeffect">+2% בעימות</span>
+              </button>
+              <button class="action-btn" onclick="doAction('spin_doctor')">
+                <span class="aicon">🌀</span>
+                <span class="aname">יועץ תקשורת</span>
+                <span class="acost">₪200,000</span>
+                <span class="aeffect">נקה שערורייה</span>
+              </button>
+            </div>
+          </div>
+          <div class="action-category">
+            <div class="action-category-title">🌐 עמדות מדיניות</div>
+            <div class="action-grid">
+              <button class="action-btn" onclick="doAction('security_speech')">
+                <span class="aicon">🛡️</span>
+                <span class="aname">נאום ביטחון</span>
+                <span class="acost">₪50,000</span>
+                <span class="aeffect">+1.5% בימין</span>
+              </button>
+              <button class="action-btn" onclick="doAction('social_promise')">
+                <span class="aicon">🏥</span>
+                <span class="aname">הבטחה חברתית</span>
+                <span class="acost">₪50,000</span>
+                <span class="aeffect">+1.5% במרכז</span>
+              </button>
+              <button class="action-btn" onclick="doAction('economy_plan')">
+                <span class="aicon">📊</span>
+                <span class="aname">תכנית כלכלית</span>
+                <span class="acost">₪80,000</span>
+                <span class="aeffect">+GDP image</span>
+              </button>
+              <button class="action-btn" onclick="doAction('coalition_signal')">
+                <span class="aicon">🤝</span>
+                <span class="aname">איתות קואליציה</span>
+                <span class="acost">₪30,000</span>
+                <span class="aeffect">+נכונות לשיח</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- POLLS TAB -->
+        <div class="tab-panel" id="tab-polls">
+          <div class="section-title-big">📊 מפת הסקרים</div>
+          <div id="polls-content"></div>
+        </div>
+
+        <!-- MEDIA TAB -->
+        <div class="tab-panel" id="tab-media">
+          <div class="section-title-big">📺 מרכז מדיה</div>
+          <div id="media-content"></div>
+        </div>
+
+        <!-- FIELD TAB -->
+        <div class="tab-panel" id="tab-field">
+          <div class="section-title-big">📍 מפת שטח</div>
+          <div id="field-content"></div>
+        </div>
+
+        <!-- COALITION TAB -->
+        <div class="tab-panel" id="tab-coalition">
+          <div class="section-title-big">🤝 ממשקת קואליציה</div>
+          <div id="coalition-content"></div>
+        </div>
+
+        <!-- LOG TAB -->
+        <div class="tab-panel" id="tab-log">
+          <div class="section-title-big">📋 יומן אסטרטגי</div>
+          <div class="log-feed" id="log-feed"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="panel-right">
+      <!-- Commentator Feed -->
+      <div class="panel-section">
+        <div class="panel-section-title"><span class="dot" style="background:var(--neon-pink)"></span>פרשנים ותגובות</div>
+        <div id="commentator-feed"></div>
+      </div>
+
+      <!-- MK Roster -->
+      <div class="panel-section">
+        <div class="panel-section-title"><span class="dot" style="background:var(--neon-purple)"></span><span id="mk-roster-title">רשימת ח"כים נבחרים</span></div>
+        <div id="mk-roster"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS SCREEN -->
+<div id="results-screen">
+  <div class="results-hero">
+    <h1 id="results-title">🗳️ תוצאות הבחירות</h1>
+    <p id="results-subtitle" style="color:var(--text-dim); font-size:1.1rem;"></p>
+  </div>
+  <div class="results-grid" id="results-grid"></div>
+  <div style="text-align:center; margin-top:32px;">
+    <button class="start-btn" style="max-width:300px; margin:0 auto; display:block;" onclick="showSetup()">🔄 מחזור בחירות חדש</button>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal-box" id="modal-box">
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-actions" id="modal-actions"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+/* ====================================================================
+   BALFOUR GRAND STRATEGY — CORE ENGINE v3.0
+   Complete Political Strategy Simulator
+==================================================================== */
+
+// ─── GLOBAL STATE ──────────────────────────────────────────────────
+const G = {
+  arena: 'IL',
+  selectedYear: '2022',
+  playerPartyIndex: 0,
+  difficulty: 'easy',
+  daysLeft: 45,
+  totalDays: 45,
+  cash: 8000000,
+  approval: 52,
+  approvalHistory: [],
+  momentum: 3,
+  volunteers: 2400,
+  seats: 0,
+  currentTurn: 0,
+  securityIndex: 30,  // 0=peace, 100=war
+  gdp: 3.2,
+  inflation: 4.1,
+  unemployment: 4.8,
+  interestRate: 3.5,
+  debtFactor: 1.0,
+  activeScandalLevel: 0,
+  debatePrepBonus: 0,
+  coalitionSeats: 0,
+  pendingEvents: [],
+  resolvedEvents: [],
+  logEntries: [],
+  commentatorQueue: [],
+  polls: [],
+  mkList: [],
+  cities: [],
+  parties: [],
+  playerParty: null,
+  coalitionStatus: {},
+  eventCooldown: 0,
+  mediaCenter: { pressConfs: 0, tvInterviews: 0, ads: 0 },
+  fieldOps: { branches: 0, rallies: 0, canvasses: 0 },
+};
+
+// ─── ELECTIONS DATABASE ────────────────────────────────────────────
+const IL_ELECTIONS = {
+  "1949": { title: "הכנסת ה-1 (1949) — הקמת המדינה", parties: [
+    {name:'מפא"י', strength:35.7, ideology:3, color:'#cc2222', seats:46},
+    {name:'מפ"ם', strength:14.7, ideology:2, color:'#aa0000', seats:19},
+    {name:'החזית הדתית', strength:12.2, ideology:7, color:'#884400', seats:16},
+    {name:'חירות', strength:11.5, ideology:8, color:'#003388', seats:14},
+    {name:'הציונים הכלליים', strength:5.2, ideology:5, color:'#4488cc', seats:7},
+    {name:'המפלגה הפרוגרסיבית', strength:4.1, ideology:4, color:'#66aacc', seats:5},
+  ]},
+  "1955": { title: "הכנסת ה-3 (1955)", parties: [
+    {name:'מפא"י', strength:32.2, ideology:3, color:'#cc2222', seats:40},
+    {name:'חירות', strength:12.6, ideology:8, color:'#003388', seats:15},
+    {name:'הציונים הכלליים', strength:10.2, ideology:5, color:'#4488cc', seats:13},
+    {name:'מפד"ל', strength:9.1, ideology:6, color:'#886600', seats:11},
+    {name:'אחדות העבודה', strength:8.2, ideology:2, color:'#aa0000', seats:10},
+    {name:'מפ"ם', strength:7.3, ideology:2, color:'#cc0000', seats:9},
+  ]},
+  "1977": { title: "הכנסת ה-9 (1977) — המהפך", parties: [
+    {name:'הליכוד', strength:33.4, ideology:8, color:'#1166cc', seats:43},
+    {name:'המערך', strength:24.6, ideology:3, color:'#cc2222', seats:32},
+    {name:'ד"ש', strength:11.6, ideology:5, color:'#44aacc', seats:15},
+    {name:'מפד"ל', strength:9.2, ideology:7, color:'#886600', seats:12},
+    {name:'חד"ש', strength:4.6, ideology:1, color:'#ff0000', seats:5},
+    {name:'אגודת ישראל', strength:3.4, ideology:9, color:'#440044', seats:4},
+  ]},
+  "1992": { title: "הכנסת ה-13 (1992) — מהפך רבין", parties: [
+    {name:'העבודה', strength:34.7, ideology:3, color:'#cc2222', seats:44},
+    {name:'הליכוד', strength:24.9, ideology:8, color:'#1166cc', seats:32},
+    {name:'מרצ', strength:9.6, ideology:1, color:'#00aa55', seats:12},
+    {name:'ש"ס', strength:4.9, ideology:7, color:'#883300', seats:6},
+    {name:'מפד"ל', strength:4.9, ideology:7, color:'#886600', seats:6},
+    {name:'יהדות התורה', strength:3.2, ideology:10, color:'#440044', seats:4},
+  ]},
+  "2003": { title: "הכנסת ה-16 (2003) — שרון שולט", parties: [
+    {name:'הליכוד', strength:29.4, ideology:8, color:'#1166cc', seats:38},
+    {name:'העבודה', strength:14.5, ideology:3, color:'#cc2222', seats:19},
+    {name:'שינוי', strength:12.3, ideology:4, color:'#44aacc', seats:15},
+    {name:'ש"ס', strength:8.1, ideology:7, color:'#883300', seats:11},
+    {name:'האיחוד הלאומי', strength:5.5, ideology:10, color:'#000066', seats:7},
+    {name:'מרצ', strength:5.2, ideology:1, color:'#00aa55', seats:6},
+    {name:'יהדות התורה', strength:4.3, ideology:10, color:'#440044', seats:5},
+  ]},
+  "2006": { title: "הכנסת ה-17 (2006) — עידן קדימה", parties: [
+    {name:'קדימה', strength:22.0, ideology:5, color:'#ff6600', seats:29},
+    {name:'העבודה', strength:15.1, ideology:3, color:'#cc2222', seats:19},
+    {name:'ש"ס', strength:9.5, ideology:7, color:'#883300', seats:12},
+    {name:'ישראל ביתנו', strength:8.9, ideology:9, color:'#000055', seats:11},
+    {name:'הליכוד', strength:8.9, ideology:8, color:'#1166cc', seats:12},
+    {name:'איחוד לאומי-מפד"ל', strength:7.1, ideology:9, color:'#000066', seats:9},
+    {name:'גמלאים-גיל', strength:5.9, ideology:5, color:'#666666', seats:7},
+  ]},
+  "2013": { title: "הכנסת ה-19 (2013) — לפיד עולה", parties: [
+    {name:'הליכוד ביתנו', strength:23.3, ideology:8, color:'#1166cc', seats:31},
+    {name:'יש עתיד', strength:14.3, ideology:5, color:'#ff6600', seats:19},
+    {name:'העבודה', strength:11.4, ideology:3, color:'#cc2222', seats:15},
+    {name:'הבית היהודי', strength:9.1, ideology:9, color:'#004400', seats:12},
+    {name:'ש"ס', strength:8.7, ideology:7, color:'#883300', seats:11},
+    {name:'יהדות התורה', strength:5.2, ideology:10, color:'#440044', seats:7},
+    {name:'התנועה', strength:4.9, ideology:4, color:'#4488cc', seats:6},
+    {name:'מרצ', strength:4.5, ideology:1, color:'#00aa55', seats:6},
+  ]},
+  "2015": { title: "הכנסת ה-20 (2015) — הליכוד מפתיע", parties: [
+    {name:'הליכוד', strength:23.4, ideology:8, color:'#1166cc', seats:30},
+    {name:'המחנה הציוני', strength:18.7, ideology:3, color:'#cc2222', seats:24},
+    {name:'הרשימה המשותפת', strength:10.6, ideology:1, color:'#cc3322', seats:13},
+    {name:'יש עתיד', strength:8.8, ideology:5, color:'#ff6600', seats:11},
+    {name:'כולנו', strength:7.5, ideology:5, color:'#00aacc', seats:10},
+    {name:'הבית היהודי', strength:6.7, ideology:9, color:'#004400', seats:8},
+    {name:'ש"ס', strength:5.7, ideology:7, color:'#883300', seats:7},
+    {name:'ישראל ביתנו', strength:5.1, ideology:9, color:'#000055', seats:6},
+    {name:'יהדות התורה', strength:4.9, ideology:10, color:'#440044', seats:6},
+    {name:'מרצ', strength:3.8, ideology:1, color:'#00aa55', seats:5},
+  ]},
+  "2019A": { title: "הכנסת ה-21 (אפריל 2019)", parties: [
+    {name:'הליכוד', strength:26.5, ideology:8, color:'#1166cc', seats:35},
+    {name:'כחול לבן', strength:26.1, ideology:5, color:'#002299', seats:35},
+    {name:'ש"ס', strength:5.9, ideology:7, color:'#883300', seats:8},
+    {name:'יהדות התורה', strength:5.7, ideology:10, color:'#440044', seats:8},
+    {name:'חד"ש-תע"ל', strength:4.5, ideology:1, color:'#cc3322', seats:6},
+    {name:'העבודה', strength:4.4, ideology:3, color:'#cc2222', seats:6},
+    {name:'ישראל ביתנו', strength:4.0, ideology:9, color:'#000055', seats:5},
+    {name:'ימינה', strength:3.7, ideology:10, color:'#004400', seats:5},
+    {name:'מרצ', strength:3.5, ideology:1, color:'#00aa55', seats:4},
+  ]},
+  "2021": { title: "הכנסת ה-24 (2021) — ממשלת השינוי", parties: [
+    {name:'הליכוד', strength:24.1, ideology:8, color:'#1166cc', seats:30},
+    {name:'יש עתיד', strength:13.9, ideology:5, color:'#ff6600', seats:17},
+    {name:'ש"ס', strength:7.1, ideology:7, color:'#883300', seats:9},
+    {name:'כחול לבן', strength:6.6, ideology:5, color:'#002299', seats:8},
+    {name:'ימינה', strength:6.2, ideology:9, color:'#004400', seats:7},
+    {name:'העבודה', strength:6.0, ideology:3, color:'#cc2222', seats:7},
+    {name:'יהדות התורה', strength:5.6, ideology:10, color:'#440044', seats:7},
+    {name:'ישראל ביתנו', strength:5.6, ideology:9, color:'#000055', seats:7},
+    {name:'הציונות הדתית', strength:5.1, ideology:10, color:'#003300', seats:6},
+    {name:'רע"מ', strength:3.7, ideology:6, color:'#00aa44', seats:4},
+    {name:'מרצ', strength:3.5, ideology:1, color:'#00aa55', seats:6},
+  ]},
+  "2022": { title: "הכנסת ה-25 (2022) — ממשלת ה-64", parties: [
+    {name:'הליכוד', strength:23.4, ideology:8, color:'#1166cc', seats:32},
+    {name:'יש עתיד', strength:17.7, ideology:5, color:'#ff6600', seats:24},
+    {name:'הציונות הדתית-עוצמה יהודית', strength:10.8, ideology:10, color:'#003300', seats:14},
+    {name:'המחנה הממלכתי', strength:9.0, ideology:5, color:'#336699', seats:12},
+    {name:'ש"ס', strength:8.2, ideology:7, color:'#883300', seats:11},
+    {name:'יהדות התורה', strength:5.8, ideology:10, color:'#440044', seats:7},
+    {name:'ישראל ביתנו', strength:4.4, ideology:9, color:'#000055', seats:6},
+    {name:'רע"מ', strength:4.0, ideology:6, color:'#00aa44', seats:5},
+    {name:'חד"ש-תע"ל', strength:3.7, ideology:1, color:'#cc3322', seats:5},
+    {name:'העבודה', strength:3.7, ideology:3, color:'#cc2222', seats:4},
+  ]},
+  "2026": { title: "הכנסת ה-26 (2026) — מפה מעודכנת", parties: [
+    {name:'הליכוד', strength:22.5, ideology:8, color:'#1166cc', seats:30},
+    {name:'ביחד', strength:19.0, ideology:5, color:'#0066cc', seats:25},
+    {name:'יש עתיד', strength:14.0, ideology:5, color:'#ff6600', seats:18},
+    {name:'ש"ס', strength:8.5, ideology:7, color:'#883300', seats:11},
+    {name:'הדמוקרטים', strength:8.2, ideology:2, color:'#cc2222', seats:10},
+    {name:'עוצמה יהודית', strength:7.4, ideology:10, color:'#000033', seats:10},
+    {name:'יהדות התורה', strength:6.0, ideology:10, color:'#440044', seats:8},
+    {name:'ישראל ביתנו', strength:5.5, ideology:9, color:'#000055', seats:7},
+    {name:'רע"מ', strength:4.2, ideology:6, color:'#00aa44', seats:5},
+    {name:'חד"ש', strength:3.5, ideology:1, color:'#cc3322', seats:4},
+  ]},
+};
+
+const US_ELECTIONS = {
+  "1860": { title: "ארה\"ב 19 (1860) — לינקולן ומלחמת האזרחים", parties: [
+    {name:'רפובליקנים (לינקולן)', strength:39.8, ideology:4, color:'#cc2222', seats:180},
+    {name:'דמוקרטים צפון', strength:29.5, ideology:3, color:'#002288', seats:72},
+    {name:'דמוקרטים דרום', strength:18.1, ideology:8, color:'#225599', seats:72},
+    {name:'איחוד חוקתי', strength:12.6, ideology:6, color:'#888800', seats:39},
+  ]},
+  "1912": { title: "ארה\"ב 32 (1912) — פיצול רפובליקנים", parties: [
+    {name:'דמוקרטים (וילסון)', strength:41.8, ideology:3, color:'#002288', seats:435},
+    {name:'התקדמותיים (רוזוולט)', strength:27.4, ideology:2, color:'#008800', seats:88},
+    {name:'רפובליקנים (טאפט)', strength:23.2, ideology:8, color:'#cc2222', seats:8},
+    {name:'סוציאליסטים', strength:6.0, ideology:1, color:'#ff0000', seats:0},
+  ]},
+  "1932": { title: "ארה\"ב 37 (1932) — הניו דיל", parties: [
+    {name:'דמוקרטים (FDR)', strength:57.4, ideology:3, color:'#002288', seats:472},
+    {name:'רפובליקנים (הובר)', strength:39.6, ideology:8, color:'#cc2222', seats:59},
+    {name:'סוציאליסטים', strength:2.2, ideology:1, color:'#ff0000', seats:0},
+    {name:'קומוניסטים', strength:0.8, ideology:0, color:'#880000', seats:0},
+  ]},
+  "1960": { title: "ארה\"ב 44 (1960) — קנדי-ניקסון", parties: [
+    {name:'דמוקרטים (קנדי)', strength:49.7, ideology:3, color:'#002288', seats:303},
+    {name:'רפובליקנים (ניקסון)', strength:49.5, ideology:7, color:'#cc2222', seats:219},
+    {name:'אנשי בוחרים לא-מחויבים', strength:0.8, ideology:5, color:'#888888', seats:15},
+  ]},
+  "1980": { title: "ארה\"ב 49 (1980) — מהפכת רייגן", parties: [
+    {name:'רפובליקנים (רייגן)', strength:50.7, ideology:9, color:'#cc2222', seats:489},
+    {name:'דמוקרטים (קרטר)', strength:41.0, ideology:3, color:'#002288', seats:49},
+    {name:'עצמאי (אנדרסון)', strength:6.6, ideology:5, color:'#888888', seats:0},
+  ]},
+  "2000": { title: "ארה\"ב 54 (2000) — בוש נגד גור", parties: [
+    {name:'רפובליקנים (בוש)', strength:47.9, ideology:8, color:'#cc2222', seats:271},
+    {name:'דמוקרטים (גור)', strength:48.4, ideology:3, color:'#002288', seats:266},
+    {name:'ירוקים (ניידר)', strength:2.7, ideology:1, color:'#00aa44', seats:0},
+    {name:'רפורמה (בוקאנן)', strength:0.4, ideology:10, color:'#666600', seats:0},
+  ]},
+  "2008": { title: "ארה\"ב 56 (2008) — עידן אובמה", parties: [
+    {name:'דמוקרטים (אובמה)', strength:52.9, ideology:2, color:'#002288', seats:365},
+    {name:'רפובליקנים (מק\'קיין)', strength:45.7, ideology:8, color:'#cc2222', seats:173},
+    {name:'עצמאיים', strength:1.4, ideology:5, color:'#888888', seats:0},
+  ]},
+  "2016": { title: "ארה\"ב 58 (2016) — טראמפ מנצח", parties: [
+    {name:'רפובליקנים (טראמפ)', strength:46.1, ideology:9, color:'#cc2222', seats:304},
+    {name:'דמוקרטים (קלינטון)', strength:48.2, ideology:2, color:'#002288', seats:227},
+    {name:'ליברטריאנים', strength:3.3, ideology:5, color:'#ccaa00', seats:0},
+    {name:'ירוקים', strength:1.1, ideology:0, color:'#00aa44', seats:0},
+  ]},
+  "2020": { title: "ארה\"ב 59 (2020) — ביידן נגד טראמפ", parties: [
+    {name:'דמוקרטים (ביידן)', strength:51.3, ideology:3, color:'#002288', seats:306},
+    {name:'רפובליקנים (טראמפ)', strength:46.8, ideology:9, color:'#cc2222', seats:232},
+    {name:'ליברטריאנים', strength:1.2, ideology:5, color:'#ccaa00', seats:0},
+  ]},
+  "2024": { title: "ארה\"ב 60 (2024) — טראמפ חוזר", parties: [
+    {name:'רפובליקנים (טראמפ)', strength:50.1, ideology:9, color:'#cc2222', seats:312},
+    {name:'דמוקרטים (האריס)', strength:48.3, ideology:2, color:'#002288', seats:226},
+    {name:'עצמאיים', strength:1.6, ideology:5, color:'#888888', seats:0},
+  ]},
+};
+
+// ─── PCG: NAMES DATABASE ───────────────────────────────────────────
+const MK_FIRST_NAMES = ['בנימין','יאיר','בני','אריה','בצלאל','איתמר','יצחק','משה','גדעון','מנסור','אחמד','איימן','יואב','אלי','ניר','מירי','שלמה','ישראל','אמיר','גלית','מאי','יולי','זאב','חילי','מאיר','קארין','מיקי','מירב','עפר','אסתר','דניאל','נועה','רות','יונה','ציפי','עיינה','תמר','אורלי','שירה','ליאת','נתי','עדי','רוני','ליהי','ענת','כרמלה','דפנה','אלונה','שרית','פנינה'];
+const MK_LAST_NAMES = ['כהן','לוי','מזרחי','פרץ','ביטון','שמש','דהן','אזולאי','אמסלם','גבאי','בן-דוד','חמו','גולן','שפירא','רוזן','ברקת','רגב','קרעי','אוחנה','גנץ','לפיד','נתניהו','ליברמן','גפני','דרעי','עבאס','טיבי','עודה','גלנט','סמוטריץ'];
+const MK_ROLES = ['יו"ר ועדה','ח"כ בכיר','שר פעיל','שר לשעבר','מוביל פריימריז','מנהל מחוז','ח"כ תומך','ח"כ מתנגד','גורם לחץ','ח"כ עצמאי'];
+const US_FIRST_NAMES = ['James','Robert','Michael','William','David','Richard','Joseph','Thomas','Charles','Daniel','Mark','Steven','Andrew','Kevin','Brian','George','Edward','Jason','Jeffrey','Mary','Patricia','Jennifer','Linda','Elizabeth','Barbara','Susan','Jessica','Sarah','Karen','Nancy','Lisa','Margaret','Sandra','Ashley','Kimberly','Emily','Donna','Carol','Michelle','Amanda'];
+const US_LAST_NAMES = ['Johnson','Williams','Brown','Davis','Miller','Wilson','Anderson','Thompson','Martinez','Robinson','Clark','Rodriguez','Walker','Hall','Allen','Young','King','Wright','Scott','Torres','Nguyen','Hill','Flores','Green','Adams','Baker','Nelson','Carter','Mitchell','Perez'];
+const US_ROLES = ['חבר קונגרס בכיר','סנטור','יו"ר ועדה בקונגרס','מושל מדינה','ראש מפלגה במדינה','חבר קונגרס מהקדנציה הראשונה','גורם לחץ מפלגתי','חבר קונגרס עצמאי','סגן מנהיג הסיעה','אסטרטג קמפיין מדינתי'];
+const CITY_NAMES_IL = ['ירושלים','תל אביב','חיפה','ראשון לציון','פתח תקווה','אשדוד','נתניה','באר שבע','בני ברק','חולון','רמת גן','רחובות','אשקלון','בת ים','הרצליה','כפר סבא','מודיעין','ראש העין','חדרה','גבעתיים','קרית אתא','אילת','עפולה','נצרת','טבריה','נהריה','אום אל-פחם','טייבה','שפרעם','סחנין','מגדל העמק','קרית שמונה','צפת','בית שאן','יבנה','קרית גת','לוד','רמלה','גדרה','קרית מלאכי','דימונה','ירוחם','אורנית','גן יבנה','אריאל','מעלה אדומים','כרמיאל','עכו','קצרין','ערד','נשר','אור יהודה','גבעת שמואל','יקנעם עילית','בית שמש','שדרות','אלעד'];
+const STATE_NAMES_US = ['Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming'];
+const COMMENTATORS_IL = [
+  {name:'אמית סגל', channel:'ערוץ 12', avatar:'אס'},
+  {name:'רביב דרוקר', channel:'ערוץ 12', avatar:'רד'},
+  {name:'דפנה ליאל', channel:'כאן 11', avatar:'דל'},
+  {name:'ירון אברהם', channel:'ערוץ 13', avatar:'יא'},
+  {name:'אהוד ברבי', channel:'ערוץ 14', avatar:'אב'},
+  {name:'רינה מצליח', channel:'ערוץ 14', avatar:'רמ'},
+  {name:'אורן נהרי', channel:'כאן 11', avatar:'אנ'},
+  {name:'גלי בהט', channel:'ערוץ 12', avatar:'גב'},
+];
+const COMMENTATORS_US = [
+  {name:'Rachel Maddow', channel:'MSNBC', avatar:'RM'},
+  {name:'Tucker Carlson', channel:'Fox News', avatar:'TC'},
+  {name:'Anderson Cooper', channel:'CNN', avatar:'AC'},
+  {name:'George Will', channel:'ABC', avatar:'GW'},
+  {name:'Nate Silver', channel:'FiveThirtyEight', avatar:'NS'},
+  {name:'Chris Wallace', channel:'NBC', avatar:'CW'},
+];
+
+// ─── PCG: EVENT ENGINE (100+ BASE EVENTS) ─────────────────────────
+const EVENT_TEMPLATES = [
+  // CRISES
+  {type:'crisis',title:'סקנדל כלכלי מתפוצץ',body:'הדלפה מהאוצר חושפת כי קרובי פוליטיקאי בכיר זכו בחוזי ממשלה בשווי {M} מיליון שקל ללא מכרז תקין. הציבור זועם.',choices:[{text:'הכחש בתוקף',cost:0,effect:{approval:-2,momentum:-1,cash:0}},{text:'הפעל ועדת חקירה פנימית',cost:200000,effect:{approval:+1,momentum:+0.5,cash:-200000}}],severity:3},
+  {type:'crisis',title:'הדלפה מהקבינט',body:'פרוטוקול סודי מישיבת הממשלה הודלף לכלי תקשורת. הנאמרים מגלים מחלוקות פנימיות חריפות על {TOPIC}.',choices:[{text:'גנה את ההדלפה',cost:0,effect:{approval:-1,momentum:-2}},{text:'נצל כהזדמנות לאתחל שיח',cost:100000,effect:{approval:+0.5,momentum:+1}}],severity:2},
+  {type:'scandal',title:'הקלטה חשאית עלתה לאוויר',body:'ערוץ {CH} שידר הקלטת "מיק חם" של בכיר מפלגתי שאמר "{QUOTE}". הסערה ברשתות החברתיות חסרת תקדים.',choices:[{text:'ביטול מיידי של ההצהרה',cost:150000,effect:{approval:-1,momentum:-3}},{text:'עמוד מאחורי הדברים בגאווה',cost:0,effect:{approval:+2,momentum:+2,risk:true}}],severity:4},
+  {type:'geopolitical',title:'הסלמה ביטחונית בגבול',body:'סדרת אירועי ירי בגבול {BORDER} הביאה לצו הכנסות חירום ב-{NUM} יישובים. הציבור מחפש מנהיגות חזקה.',choices:[{text:'תמוך בצבא ודרוש אחדות',cost:0,effect:{approval:+2,securityIndex:+15,momentum:+1}},{text:'קרא לדה-אסקלציה מיידית',cost:0,effect:{approval:-1,securityIndex:+5}}],severity:3},
+  {type:'opportunity',title:'סקר מפתיע לטובתנו',body:'סקר של {POLLSTER} מראה עלייה של {PCT}% בתמיכה בעקבות הנאום האחרון. חלון הזדמנויות נפתח.',choices:[{text:'מנף עם קמפיין פרסומי מיידי',cost:300000,effect:{approval:+2,momentum:+3}},{text:'המשך בזהירות',cost:0,effect:{approval:+1}}],severity:1},
+  {type:'crisis',title:'שביתת שרתי הציבור',body:'מאות אלפי עובדי ציבור יצאו לשביתה כוללת בדרישה לתוספת שכר של {PCT}%. הבסיס הימני מאשים את הממשלה.',choices:[{text:'הבטח העלאת שכר',cost:500000,effect:{approval:+1.5,cash:-500000,gdp:-0.3}},{text:'דחה את הדרישות',cost:0,effect:{approval:-2,momentum:-2}}],severity:3},
+  {type:'scandal',title:'בכיר נחשף בשחיתות',body:'בכיר {PARTY} נחשף לכאורה כי קיבל שוחד בסך {M} מיליון ש"ח בתמורה לרישיון עסקי. פרקליטות פתחה בחקירה.',choices:[{text:'הרחק מיידי מהמפלגה',cost:0,effect:{approval:+2,momentum:+1}},{text:'הגן עליו עד לבירור',cost:0,effect:{approval:-3,momentum:-2,risk:true}}],severity:5},
+  {type:'geopolitical',title:'סבב לחימה בעזה',body:'ירי רקטות מרצועת עזה פגע ב{NUM} בניינים באשקלון. עולם המדיה בסערה. הציבור תובע תגובה.',choices:[{text:'קרא לאחדות לאומית',cost:0,effect:{approval:+3,securityIndex:+20,momentum:+2}},{text:'ביקורת על מחדלי הממשלה',cost:0,effect:{approval:-1,momentum:-1}}],severity:4},
+  {type:'opportunity',title:'הצלחה כלכלית מדווחת',body:'הלמ"ס מדווח על נתוני תעסוקה מצוינים: {PCT}% בלבד מובטלים, שפל שנתי. הממשלה קוצרת קרדיט.',choices:[{text:'נאום על ניהול כלכלי אחראי',cost:50000,effect:{approval:+2,momentum:+1,gdp:+0.2}},{text:'הבטח הרחבת הטבות',cost:0,effect:{approval:+1}}],severity:1},
+  {type:'crisis',title:'סדקים בקואליציה',body:'מקורות בכירים מדווחים כי ח"כים מ{PARTY} מהרהרים בהצבעת אי-אמון בשל {ISSUE}. המשבר מתעמק.',choices:[{text:'הזמן לדיון פנימי דחוף',cost:100000,effect:{approval:-1,momentum:-2}},{text:'הכחש ואמר "הכל בסדר"',cost:0,effect:{approval:-0.5,momentum:-1,risk:true}}],severity:4},
+  {type:'crisis',title:'מחאה המונית ברחובות',body:'עשרות אלפי מפגינים יצאו לרחובות ב{CITY} נגד {POLICY}. הכיכרות עמוסות — מדד המחאה ב{NUM} נקודות שיא.',choices:[{text:'פגוש את נציגי המפגינים',cost:0,effect:{approval:+1,momentum:+1}},{text:'דחה את הדרישות',cost:0,effect:{approval:-3,momentum:-3}}],severity:4},
+  {type:'opportunity',title:'תומך כריזמטי הצטרף',body:'ח"כ לשעבר {MK} הכריז על תמיכה ציבורית בפלטפורמה שלנו. תרומת מוניטין משמעותית.',choices:[{text:'קיים טקס קבלת פנים',cost:80000,effect:{approval:+1.5,momentum:+2,volunteers:+300}},{text:'קבל בשקט',cost:0,effect:{approval:+0.5,momentum:+0.5}}],severity:1},
+  {type:'scandal',title:'כשל בניהול הבחירות',body:'ועדת הבחירות המרכזית דיווחה על ליקויים בספירת קולות ב{CITY} בסיבוב הקודם. האופוזיציה מנצלת.',choices:[{text:'תמוך בחקירה עצמאית',cost:0,effect:{approval:+1,momentum:+0.5}},{text:'הסיט תשומת לב',cost:200000,effect:{approval:0,momentum:-1}}],severity:2},
+  {type:'geopolitical',title:'עסקת נשק אסטרטגית',body:'ממשלה חתמה על עסקת נשק חדשה עם ארה"ב בשווי {M} מיליארד דולר. ישראל חיזקה את עצמאותה הביטחונית.',choices:[{text:'השתמש בניצחון הזה',cost:0,effect:{approval:+2,securityIndex:-10,momentum:+1}},{text:'ביקר עלות העסקה',cost:0,effect:{approval:-1,momentum:-1}}],severity:2},
+  {type:'opportunity',title:'שיתוף פעולה עסקי',body:'עשרות איגודים עסקיים הכריזו על תמיכה בפלטפורמה הכלכלית שלנו. תרומות גדולות צפויות.',choices:[{text:'קבל בגלוי ותודה',cost:0,effect:{cash:+500000,approval:+1}},{text:'שמור מרחק להימנע מקריאות של "קרוניזם"',cost:0,effect:{approval:+0.5}}],severity:1},
+  {type:'crisis',title:'כישלון מערכת הבריאות',body:'דיווחים על תורים של שבועות בבתי חולים ב{CITY} ומחסור חמור בתרופות בסיסיות. הציבור זועם.',choices:[{text:'הכרז תוכנית חירום לבריאות',cost:600000,effect:{approval:+2,cash:-600000,momentum:+1}},{text:'האשם את הממשלה הקודמת',cost:0,effect:{approval:-1,momentum:-2}}],severity:3},
+  {type:'scandal',title:'פוגרום מדיה חברתית',body:'ציוץ ישן של בכיר בכיר {PARTY} מ-{YEAR} חשף עמדות שנויות במחלוקת. הרשת מוצאת לפועל.',choices:[{text:'הוצא התנצלות מלאה',cost:0,effect:{approval:-1,momentum:-2}},{text:'גנה את ציד המכשפות',cost:0,effect:{approval:+1,momentum:+1,risk:true}}],severity:3},
+  {type:'opportunity',title:'ניצחון בבית המשפט',body:'בית המשפט העליון פסק לטובת עמדת המפלגה בנושא {ISSUE}. פסיקה תקדימית מחזקת אמינות.',choices:[{text:'ציין את הניצחון הדמוקרטי',cost:50000,effect:{approval:+2,momentum:+2}},{text:'המשך בשקט ביישום',cost:0,effect:{approval:+0.5}}],severity:1},
+  {type:'geopolitical',title:'ביקור מדינה חשוב',body:'שגריר ארה"ב הגיע לפגישה עם ראשי סיעות. נאמר כי דנו ב{TOPIC}. השפעה על יחסי חוץ.',choices:[{text:'פרסם בטקס',cost:50000,effect:{approval:+1.5,momentum:+1}},{text:'שמור על פרטיות',cost:0,effect:{approval:+0.5}}],severity:2},
+  {type:'crisis',title:'עלייה חדה ביוקר המחיה',body:'מחירי המזון עלו ב{PCT}% ב{CITY} ו{PCT2}% ארצית. הלחץ הציבורי על ה"מטבח" גובר.',choices:[{text:'הכרז על סל מזון ממשלתי',cost:800000,effect:{approval:+3,cash:-800000,inflation:+0.5}},{text:'דחה לדיון בממשלה',cost:0,effect:{approval:-3,momentum:-2}}],severity:5},
+
+  // ─── ECONOMY ───────────────────────────────────────────────────
+  {type:'economic',title:'הורדת ריבית בנק מרכזי',body:'הבנק המרכזי הודיע על הורדת ריבית ב-{PCT}%, מהלך שצפוי להוזיל משכנתאות ולעודד צמיחה.',choices:[{text:'ברך על המהלך פומבית',cost:30000,effect:{approval:+1.5,gdp:+0.2,momentum:+1}},{text:'הזהר מפני אינפלציה',cost:0,effect:{approval:+0.3,inflation:+0.2}}],severity:2},
+  {type:'economic',title:'משבר בשוק הדיור',body:'מחירי הדיור ב{CITY} זינקו ב-{PCT}% בשנה האחרונה. זוגות צעירים מתקשים לרכוש דירה ראשונה.',choices:[{text:'הצע תוכנית דיור ציבורי',cost:700000,effect:{approval:+2.5,cash:-700000}},{text:'הטל מס על דירה שלישית',cost:0,effect:{approval:+1,momentum:-0.5}}],severity:3},
+  {type:'economic',title:'התרסקות בשוק ההון',body:'מדד ת"א-35 צנח ב-{PCT}% בעקבות חששות גלובליים. משקיעים בפאניקה.',choices:[{text:'הרגע את השווקים בהצהרה',cost:50000,effect:{approval:+0.5,gdp:-0.1}},{text:'דרוש פיקוח הדוק יותר',cost:0,effect:{approval:+1,momentum:+0.5}}],severity:3},
+  {type:'economic',title:'גירעון תקציבי חורג',body:'משרד האוצר חושף כי הגירעון התקציבי חצה את ה-{PCT}% מהתמ"ג, חריגה מהיעד שנקבע.',choices:[{text:'הכרז על קיצוצים',cost:0,effect:{approval:-2,gdp:+0.3}},{text:'הגדל את החוב הלאומי',cost:0,effect:{approval:+1,inflation:+0.4}}],severity:3},
+  {type:'economic',title:'שביתת נמלים ארצית',body:'עובדי הנמלים השביתו את הפעילות במחאה על תוכנית הרפורמה. ספינות מטען נערמות בים.',choices:[{text:'פתח במשא ומתן מיידי',cost:300000,effect:{approval:+1,cash:-300000}},{text:'הפעל צווי חירום',cost:0,effect:{approval:-1.5,momentum:-1,securityIndex:+5}}],severity:4},
+  {type:'economic',title:'גילוי מאגר גז טבעי',body:'נתגלה מאגר גז טבעי חדש מול חופי המדינה, בשווי מוערך של {M} מיליארד דולר.',choices:[{text:'הכרז על "עידן כלכלי חדש"',cost:0,effect:{approval:+3,momentum:+2,gdp:+0.4}},{text:'הבטח חלוקה הוגנת של הרווחים',cost:100000,effect:{approval:+2,cash:-100000}}],severity:1},
+  {type:'economic',title:'התייקרות הדלק',body:'מחירי הדלק העולמיים זינקו, ומחיר הבנזין בתחנות עלה ב-{PCT}% בחודש האחרון.',choices:[{text:'הקפא את מס הדלק',cost:400000,effect:{approval:+2,cash:-400000}},{text:'תן לשוק להתאזן',cost:0,effect:{approval:-1.5,momentum:-1}}],severity:3},
+  {type:'economic',title:'גל פיטורים בהייטק',body:'חברות הייטק מובילות הודיעו על פיטורי המוניים של {NUM},000 עובדים בעקבות האטה גלובלית.',choices:[{text:'הכרז על תמריצי מס לחברות',cost:200000,effect:{approval:+1,cash:-200000,gdp:+0.1}},{text:'הצע רשת ביטחון לעובדים מפוטרים',cost:350000,effect:{approval:+2,cash:-350000}}],severity:3},
+  {type:'economic',title:'דירוג אשראי בינלאומי',body:'סוכנות הדירוג {POLLSTER} הותירה את דירוג האשראי של המדינה ללא שינוי, אך הזהירה מפני "אי-יציבות פוליטית".',choices:[{text:'ציין את היציבות הכלכלית',cost:0,effect:{approval:+1,momentum:+0.5}},{text:'התעלם מהאזהרה',cost:0,effect:{approval:0}}],severity:1},
+  {type:'economic',title:'רפורמת מס מקיפה',body:'הוצעה רפורמת מס שתשנה את מדרגות המס עבור משכי השכר הבינוניים-גבוהים.',choices:[{text:'תמוך ברפורמה מלאה',cost:0,effect:{approval:+1,momentum:+1,gdp:+0.2}},{text:'דרוש ריכוך הרפורמה',cost:50000,effect:{approval:+0.5,cash:-50000}}],severity:2},
+  {type:'economic',title:'בועת נדל"ן מסחרי',body:'אנליסטים מזהירים מפני בועת נדל"ן מסחרי במגדלי המשרדים ב{CITY}, עם תפוסה של {PCT}% בלבד.',choices:[{text:'הכרז על תמריצי הסבה לדיור',cost:250000,effect:{approval:+1.5,cash:-250000}},{text:'התעלם — לא תפקיד הממשלה',cost:0,effect:{approval:-0.5}}],severity:2},
+  {type:'economic',title:'גל ייקור בסופרמרקטים',body:'רשתות המזון הגדולות הודיעו על העלאת מחירים נוספת של {PCT}% על מוצרי יסוד.',choices:[{text:'זמן את בעלי הרשתות לבירור',cost:0,effect:{approval:+1.5,momentum:+1}},{text:'הצע סבסוד ישיר לצרכנים',cost:600000,effect:{approval:+2.5,cash:-600000}}],severity:4},
+
+  // ─── ADDITIONAL SCANDALS ───────────────────────────────────────
+  {type:'scandal',title:'פרשת מימון אסור',body:'דיווח חושף כי תרומות בסך {M} מיליון ש"ח הועברו למפלגת {PARTY} דרך עמותות קש, בניגוד לחוק מימון מפלגות.',choices:[{text:'דרוש חקירה מיידית',cost:0,effect:{approval:+1.5,momentum:+1}},{text:'הימנע מהתבטאות',cost:0,effect:{approval:-1,risk:true}}],severity:4},
+  {type:'scandal',title:'מינוי פוליטי שנוי במחלוקת',body:'מינוי קרוב משפחה של בכיר {PARTY} לתפקיד בכיר בשירות הציבורי מעורר זעם ציבורי.',choices:[{text:'דרוש ביטול המינוי',cost:0,effect:{approval:+1.5,momentum:+1}},{text:'הגן על זכותם למנות',cost:0,effect:{approval:-1,risk:true}}],severity:3},
+  {type:'scandal',title:'הוצאות אש"ל מוגזמות',body:'נחשף כי בכיר ממשלתי הוציא {M} אלף ש"ח על נסיעות אש"ל "מיותרות" בשנה החולפת.',choices:[{text:'דרוש החזר כספי מיידי',cost:0,effect:{approval:+1,momentum:+0.5}},{text:'הגדר כ"עניין שולי"',cost:0,effect:{approval:-1.5,risk:true}}],severity:2},
+  {type:'scandal',title:'ציטוט שנוי במחלוקת מהעבר',body:'נאום ישן של ראש {PARTY} מ-{YEAR} צף מחדש ברשת ועורר ביקורת בשל הטון כלפי מגזרים שונים באוכלוסייה.',choices:[{text:'הסבר את ההקשר ההיסטורי',cost:0,effect:{approval:0,momentum:-0.5}},{text:'התנצל בפומבי',cost:0,effect:{approval:+1,momentum:+0.5}}],severity:3},
+  {type:'scandal',title:'חשד לניגוד עניינים',body:'דווח כי שר בממשלה קידם חקיקה שמטיבה עם עסק משפחתי שבבעלותו, בניגוד לכללי האתיקה.',choices:[{text:'דרוש פרישתו מהתיק',cost:0,effect:{approval:+2,momentum:+1}},{text:'תן לו ליהנות מחזקת החפות',cost:0,effect:{approval:-1.5,risk:true}}],severity:4},
+  {type:'scandal',title:'הקלטה מודלפת מישיבת סיעה',body:'הקלטה מישיבת סיעת {PARTY} חושפת ויכוחים פנימיים סוערים על אסטרטגיית הקמפיין.',choices:[{text:'הצג חזית מאוחדת',cost:100000,effect:{approval:+0.5,momentum:+0.5}},{text:'התעלם — "זה קורה בכל סיעה"',cost:0,effect:{approval:-0.5}}],severity:2},
+  {type:'scandal',title:'פרשת ניצול לרעה של רכב שרד',body:'נחשף כי בני משפחת בכיר השתמשו ברכב השרד לצרכים פרטיים על חשבון משלם המסים.',choices:[{text:'הטל קנס והחזר כספי',cost:0,effect:{approval:+1,momentum:+0.5}},{text:'הגן ואמר שזה "נוהל מקובל"',cost:0,effect:{approval:-1.5,risk:true}}],severity:2},
+  {type:'scandal',title:'אשמת רגישות תרבותית',body:'התבטאות של דובר {PARTY} בריאיון נתפסה כפוגענית כלפי קבוצת מיעוט, וגררה גל ביקורת.',choices:[{text:'התנצל ופטר את הדובר',cost:0,effect:{approval:+1,momentum:+1}},{text:'הגדר כ"תקינות פוליטית מוגזמת"',cost:0,effect:{approval:-1,risk:true}}],severity:3},
+  {type:'scandal',title:'פרשת מכרזים מפוקפקת',body:'דו"ח מבקר המדינה מצביע על ליקויים חמורים במכרז ממשלתי בשווי {M} מיליון ש"ח שניתן ל{PARTY} קרוב.',choices:[{text:'הקפא את המכרז',cost:200000,effect:{approval:+2,cash:-200000}},{text:'הגן על תקינות ההליך',cost:0,effect:{approval:-1,risk:true}}],severity:4},
+  {type:'scandal',title:'דיווח כוזב לוועדת הבחירות',body:'נטען כי דוחות הכספים של מטה הקמפיין שלנו כוללים אי-דיוקים. ועדת הבחירות בודקת.',choices:[{text:'שתף פעולה באופן מלא עם הבדיקה',cost:50000,effect:{approval:+0.5,cash:-50000}},{text:'הכחש כל פגם',cost:0,effect:{approval:-1,risk:true}}],severity:3},
+  {type:'scandal',title:'בכיר נתפס בשקר גלוי',body:'בכיר {PARTY} נתפס משקר בריאיון טלוויזיה לגבי נתון כלכלי מרכזי, והעיתונאי חשף זאת בשידור חי.',choices:[{text:'דרוש ממנו להתנצל',cost:0,effect:{approval:+1,momentum:+0.5}},{text:'הגן עליו ואמר "טעות בתמימות"',cost:0,effect:{approval:-1,risk:true}}],severity:3},
+
+  // ─── COALITION CRISES ──────────────────────────────────────────
+  {type:'crisis',title:'איום פרישה מהקואליציה',body:'בכיר ב{PARTY} מאיים לפרוש מהקואליציה אם לא יקודמו דרישותיו בנושא {ISSUE} תוך {NUM} ימים.',choices:[{text:'כנס לדיון דחוף ופשרה',cost:250000,effect:{approval:0,momentum:+0.5}},{text:'דחה את האולטימטום',cost:0,effect:{approval:-1.5,momentum:-2}}],severity:4},
+  {type:'crisis',title:'מרד סמוי בסיעה',body:'שלושה ח"כים מהמפלגה שוקלים להקים סיעה עצמאית בשל אי-שביעות רצון מהנהגת המפלגה.',choices:[{text:'קיים שיחות פיוס אישיות',cost:150000,effect:{approval:0,momentum:+1}},{text:'איים בהרחקה מהרשימה',cost:0,effect:{approval:-1,momentum:-1.5}}],severity:5},
+  {type:'crisis',title:'משבר אמון בין שותפי קואליציה',body:'דיווחים על אי-תיאום חמור בין משרדי הממשלה מעלים ספקות לגבי יציבות הקואליציה הפוטנציאלית.',choices:[{text:'פרסם הצהרת אחדות משותפת',cost:100000,effect:{approval:+1,momentum:+0.5}},{text:'האשם את השותף בחוסר מקצועיות',cost:0,effect:{approval:-1,momentum:-1}}],severity:3},
+  {type:'crisis',title:'דרישה לתיק כפול',body:'מפלגת {PARTY} דורשת לקבל שני תיקים בכירים בתמורה להצטרפות לקואליציה — דרישה חריגה.',choices:[{text:'הסכם בחלקו',cost:300000,effect:{approval:0,cash:-300000}},{text:'סרב בתוקף',cost:0,effect:{approval:+0.5,momentum:-1}}],severity:4},
+  {type:'crisis',title:'הדלפת תוכן המגעים הקואליציוניים',body:'תוכן הדיונים הסודיים עם {PARTY} הודלף לעיתונות, וחושף ויתורים רגישים.',choices:[{text:'אשר חלקית את התוכן',cost:0,effect:{approval:-0.5,momentum:-1}},{text:'הכחש הכל',cost:0,effect:{approval:-1,risk:true}}],severity:3},
+
+  // ─── PROTESTS & SOCIETY ────────────────────────────────────────
+  {type:'crisis',title:'מחאת הסטודנטים',body:'אלפי סטודנטים ב{CITY} חוסמים כבישים במחאה על עליית שכר הלימוד וקיצוצי המלגות.',choices:[{text:'הבטח הקפאת שכר לימוד',cost:300000,effect:{approval:+2,cash:-300000}},{text:'קרא לפינוי המפגינים',cost:0,effect:{approval:-2,momentum:-1,securityIndex:+5}}],severity:3},
+  {type:'crisis',title:'שביתת מורים ארצית',body:'איגוד המורים הכריז על שביתה כללית במחאה על תנאי השכר וגודל הכיתות.',choices:[{text:'הצע הסכם שכר חדש',cost:500000,effect:{approval:+2,cash:-500000}},{text:'הכרז שביתה כ"בלתי חוקית"',cost:0,effect:{approval:-2,momentum:-2}}],severity:4},
+  {type:'crisis',title:'מחאת הרופאים',body:'רופאים מתמחים ב{CITY} מאיימים בהתפטרות המונית בשל עומס בלתי נסבל במחלקות.',choices:[{text:'הכרז תוכנית חירום למערכת הבריאות',cost:600000,effect:{approval:+2.5,cash:-600000}},{text:'דחה את הדיון לתקציב הבא',cost:0,effect:{approval:-2,momentum:-1.5}}],severity:4},
+  {type:'crisis',title:'הפגנת חקלאים',body:'חקלאים חוסמים כבישים בטרקטורים במחאה על יבוא מתחרה וביטול סבסוד.',choices:[{text:'הבטח הגנה על תוצרת מקומית',cost:400000,effect:{approval:+1.5,cash:-400000}},{text:'תמוך ביבוא חופשי לטובת הצרכן',cost:0,effect:{approval:-1,momentum:-1}}],severity:3},
+  {type:'opportunity',title:'תמיכת ארגון חברה אזרחית',body:'ארגון {GROUP} בעל {NUM},000 חברים הכריז על תמיכה פומבית בעמדותינו.',choices:[{text:'קיים מסיבת עיתונאים משותפת',cost:70000,effect:{approval:+1.5,momentum:+1}},{text:'תודה בפרסום ברשת',cost:0,effect:{approval:+0.5}}],severity:1},
+  {type:'crisis',title:'מחאת תושבי הפריפריה',body:'תושבי {CITY} יוצאים למחאה על הזנחה תקציבית ארוכת שנים בתשתיות ובתחבורה ציבורית.',choices:[{text:'הבטח תוכנית פיתוח אזורית',cost:550000,effect:{approval:+2,cash:-550000}},{text:'הבטח "לבדוק את הנושא"',cost:0,effect:{approval:-1,momentum:-1}}],severity:3},
+  {type:'crisis',title:'עימותים בין מפגינים למשטרה',body:'הפגנה ב{CITY} הסלימה לעימותים אלימים בין מפגינים לכוחות הסדר. דיווחים על פצועים קלים.',choices:[{text:'דרוש ועדת בדיקה עצמאית',cost:0,effect:{approval:+1,momentum:+0.5}},{text:'תמוך מלא בפעולת המשטרה',cost:0,effect:{approval:-0.5,securityIndex:+5}}],severity:4},
+  {type:'opportunity',title:'מצעד תמיכה המוני',body:'עשרות אלפי תומכים השתתפו במצעד תמיכה ספונטני ב{CITY}, ללא תיאום מטה הקמפיין.',choices:[{text:'הצטרף באופן אישי למצעד',cost:50000,effect:{approval:+2.5,momentum:+2}},{text:'שלח נציג בכיר מטעמך',cost:20000,effect:{approval:+1,momentum:+1}}],severity:1},
+  {type:'crisis',title:'מחאת הדיירים המוגנים',body:'קשישים וזכאי דיור ציבורי מוחים על תוכנית פינוי-בינוי שתפגע בזכויותיהם.',choices:[{text:'הבטח הגנה משפטית לדיירים',cost:200000,effect:{approval:+1.5,cash:-200000}},{text:'תמוך בקידום הפרויקט הכלכלי',cost:0,effect:{approval:-1,momentum:-1}}],severity:2},
+  {type:'crisis',title:'מחאת בעלי העסקים הקטנים',body:'איגוד הקמעונאים מוחה על רגולציה כבדה ומיסוי גבוה הפוגעים בעסקים קטנים.',choices:[{text:'הבטח רפורמה רגולטורית',cost:150000,effect:{approval:+1.5,cash:-150000,gdp:+0.1}},{text:'דחה — "תקציב לא מאפשר ויתורים"',cost:0,effect:{approval:-1,momentum:-1}}],severity:2},
+
+  // ─── COURTS & LEGAL ────────────────────────────────────────────
+  {type:'crisis',title:'עתירה לבג"ץ נגד מדיניות',body:'ארגון זכויות אדם הגיש עתירה לבג"ץ נגד מדיניות מרכזית שאנו מקדמים בנושא {ISSUE}.',choices:[{text:'הבע אמון מלא בבית המשפט',cost:0,effect:{approval:+0.5,momentum:0}},{text:'תקוף את "האקטיביזם השיפוטי"',cost:0,effect:{approval:+1,momentum:+0.5,risk:true}}],severity:3},
+  {type:'opportunity',title:'פסיקה תומכת מבית המשפט',body:'בית המשפט המחוזי דחה תביעה נגד המפלגה בנושא {ISSUE}, וקבע כי הפעולה הייתה כדין.',choices:[{text:'פרסם הצהרת ניצחון',cost:30000,effect:{approval:+1.5,momentum:+1}},{text:'המשך כרגיל ללא הצהרה',cost:0,effect:{approval:+0.5}}],severity:1},
+  {type:'crisis',title:'חקירה פלילית נגד בכיר',body:'הפרקליטות פתחה בחקירה פלילית נגד בכיר {PARTY} בחשד לעבירות מנהל תקין.',choices:[{text:'השעה אותו לאלתר',cost:0,effect:{approval:+2,momentum:+1}},{text:'תן לו להמשיך עד להגשת כתב אישום',cost:0,effect:{approval:-2,risk:true}}],severity:5},
+  {type:'crisis',title:'דיון בחוק יסוד שנוי במחלוקת',body:'הכנסת/הקונגרס דנים בהצעת חוק יסוד שתשנה את מערך האיזונים והבלמים בין הרשויות.',choices:[{text:'תמוך בקידום הרפורמה',cost:0,effect:{approval:+1,momentum:+1,risk:true}},{text:'דרוש הסכמה רחבה לפני הצבעה',cost:0,effect:{approval:+0.5,momentum:-0.5}}],severity:4},
+  {type:'opportunity',title:'ועדת אתיקה מזכה',body:'ועדת האתיקה קבעה כי לא נמצא פגם בהתנהלות בכיר המפלגה שהואשם בעבר.',choices:[{text:'דרוש התנצלות מהמאשימים',cost:0,effect:{approval:+1.5,momentum:+1}},{text:'המשך הלאה בלי דרמה',cost:0,effect:{approval:+0.5}}],severity:1},
+  {type:'crisis',title:'צו בית משפט נגד מימון קמפיין',body:'בית המשפט הוציא צו זמני המגביל את אופן גיוס הכספים של מטה הקמפיין שלנו.',choices:[{text:'ערער מיידית על הצו',cost:100000,effect:{approval:0,cash:-100000}},{text:'ציית לצו וחפש דרכים חוקיות',cost:0,effect:{approval:+0.5,cash:-50000}}],severity:3},
+
+  // ─── MEDIA & PUBLIC OPINION ────────────────────────────────────
+  {type:'opportunity',title:'כתבת תדמית חיובית',body:'כתב התחקירים הבכיר של {CH} פרסם כתבה אוהדת המתארת את הקמפיין כ"המאורגן ביותר בעשור".',choices:[{text:'שתף בנרחב ברשתות החברתיות',cost:30000,effect:{approval:+1.5,momentum:+1}},{text:'הימנע מניצול יתר',cost:0,effect:{approval:+0.5}}],severity:1},
+  {type:'crisis',title:'כתבת תחקיר חושפנית',body:'כתב תחקירים מ{CH} מפרסם כתבה מזיקה על ניהול כספי הקמפיין ומקורות המימון.',choices:[{text:'הוצא הבהרה מפורטת',cost:80000,effect:{approval:0,cash:-80000}},{text:'תקוף את אמינות הכתב',cost:0,effect:{approval:-0.5,risk:true}}],severity:3},
+  {type:'crisis',title:'סקר פתאומי מראה נפילה',body:'סקר {POLLSTER} שפורסם הבוקר מראה ירידה חדה של {PCT}% בתמיכה בנו תוך שבוע בלבד.',choices:[{text:'הטל ספק באמינות הסקר',cost:0,effect:{approval:0,momentum:-0.5}},{text:'הגב במהלך אסטרטגי מיידי',cost:300000,effect:{approval:+1.5,cash:-300000}}],severity:4},
+  {type:'opportunity',title:'מומנטום ברשתות החברתיות',body:'סרטון נאום שלנו הפך לוויראלי עם {NUM} מיליון צפיות תוך 24 שעות.',choices:[{text:'נצל את הגל בקמפיין ממומן',cost:150000,effect:{approval:+2.5,momentum:+2,cash:-150000}},{text:'תן לתופעה להתפתח באורגני',cost:0,effect:{approval:+1,momentum:+1}}],severity:1},
+  {type:'crisis',title:'מתקפת בוטים ברשתות',body:'אלפי חשבונות מזויפים מפיצים תוכן שלילי נגדנו ברשתות החברתיות בקמפיין מתואם.',choices:[{text:'פנה לפלטפורמות להסרת התוכן',cost:100000,effect:{approval:+0.5,cash:-100000}},{text:'התעלם — "זה לא ישפיע"',cost:0,effect:{approval:-1,momentum:-1}}],severity:2},
+  {type:'opportunity',title:'תמיכת סלבריטאי מוביל',body:'אישיות תרבות מוכרת הכריזה על תמיכה פומבית בקמפיין שלנו, והדבר עורר הדים נרחבים.',choices:[{text:'שלב אותם באירוע קמפיין',cost:60000,effect:{approval:+1.5,momentum:+1.5}},{text:'תודה בעדינות מבלי להגזים',cost:0,effect:{approval:+0.5}}],severity:1},
+  {type:'crisis',title:'פאדיחה בשידור חי',body:'דובר המפלגה נתקל בתקלה מביכה בשידור חי — שכח נתון מרכזי וגמגם מול המצלמות.',choices:[{text:'הפק תדרוך תקשורתי מתוקן',cost:50000,effect:{approval:0,momentum:-0.5}},{text:'הפוך את זה לבדיחה עצמית',cost:0,effect:{approval:+0.5,momentum:+0.5}}],severity:2},
+  {type:'opportunity',title:'ניתוח אנליסטים חיובי',body:'פאנל אנליסטים בכירים בתקשורת הכלכלית שיבח את התוכנית הכלכלית שלנו כ"הריאלית ביותר".',choices:[{text:'הדגש זאת בנאומים הבאים',cost:40000,effect:{approval:+1.5,momentum:+1}},{text:'המשך בעקביות במסר הקיים',cost:0,effect:{approval:+0.5}}],severity:1},
+
+  // ─── SECURITY & INTERNATIONAL ──────────────────────────────────
+  {type:'geopolitical',title:'פיגוע טרור נמנע',body:'כוחות הביטחון סיכלו ניסיון פיגוע ב{CITY} ברגע האחרון. הציבור מביע הקלה ותודה לכוחות הביטחון.',choices:[{text:'שבח את כוחות הביטחון בפומבי',cost:0,effect:{approval:+2,securityIndex:+5,momentum:+1}},{text:'דרוש חקירת מחדלים מקדימה',cost:0,effect:{approval:+0.5,securityIndex:+10}}],severity:3},
+  {type:'geopolitical',title:'פסגת שלום אזורית',body:'נציגי {COUNTRY} ומדינות שכנות נפגשו לפסגה אזורית שעסקה בהסכמי שיתוף פעולה כלכלי וביטחוני.',choices:[{text:'תמוך בתהליך הדיפלומטי',cost:0,effect:{approval:+1.5,securityIndex:-8,momentum:+1}},{text:'הבע ספקנות זהירה',cost:0,effect:{approval:+0.3}}],severity:2},
+  {type:'geopolitical',title:'מתיחות דיפלומטית עם בעלות ברית',body:'משבר דיפלומטי עם {COUNTRY} בעקבות הצהרה שנויה במחלוקת של בכיר ממשלתי.',choices:[{text:'פעל לתיקון היחסים בשקט',cost:80000,effect:{approval:+0.5,securityIndex:+3}},{text:'עמוד מאחורי ההצהרה המקורית',cost:0,effect:{approval:+1,securityIndex:+8,risk:true}}],severity:3},
+  {type:'geopolitical',title:'גל פליטים בגבול',body:'גל מהגרים ופליטים מנסה לחצות את הגבול עם {BORDER}, ומעורר ויכוח ציבורי חריף.',choices:[{text:'הדק את אבטחת הגבול',cost:300000,effect:{approval:+1.5,securityIndex:+5,cash:-300000}},{text:'קרא למענה הומניטרי',cost:200000,effect:{approval:+0.5,cash:-200000}}],severity:3},
+  {type:'geopolitical',title:'תרגיל צבאי משותף',body:'נחתם הסכם לתרגיל צבאי משותף עם {COUNTRY}, המדגים שיתוף פעולה ביטחוני אסטרטגי.',choices:[{text:'הצג כהישג ביטחוני',cost:0,effect:{approval:+1.5,securityIndex:-5,momentum:+1}},{text:'שמור על פרופיל נמוך',cost:0,effect:{approval:+0.3}}],severity:1},
+  {type:'geopolitical',title:'איום סייבר על תשתיות',body:'התקפת סייבר ניסתה לפגוע בתשתיות חיוניות. גורמי ביטחון מדווחים כי ההתקפה נהדפה בהצלחה.',choices:[{text:'הכרז על השקעה בהגנת סייבר',cost:400000,effect:{approval:+1.5,securityIndex:+3,cash:-400000}},{text:'הימנע מפרסום הפרטים',cost:0,effect:{approval:0,securityIndex:+5}}],severity:3},
+  {type:'geopolitical',title:'ביקור מנהיג זר',body:'נשיא {COUNTRY} הגיע לביקור רשמי, ונפגש עם ראשי המפלגות לדיון ב{TOPIC}.',choices:[{text:'בקש פגישה אישית עם הנשיא האורח',cost:60000,effect:{approval:+1.5,momentum:+1}},{text:'שלח נציג מטעמך לאירוע',cost:20000,effect:{approval:+0.5}}],severity:1},
+  {type:'crisis',title:'חטיפת אזרחים בחו"ל',body:'דיווחים על חטיפת אזרחים על ידי ארגון עוין מעוררים זעם ציבורי ודרישה לפעולה נחרצת.',choices:[{text:'דרוש מבצע חילוץ מיידי',cost:0,effect:{approval:+1,securityIndex:+15,momentum:+1}},{text:'תמוך במגעים דיפלומטיים חשאיים',cost:0,effect:{approval:+0.5,securityIndex:+5}}],severity:5},
+  {type:'geopolitical',title:'הסכם סחר בינלאומי',body:'נחתם הסכם סחר חדש עם {COUNTRY} שצפוי להגדיל את היצוא ב-{PCT}% בשנה הקרובה.',choices:[{text:'הצג כהישג כלכלי מרכזי',cost:50000,effect:{approval:+2,gdp:+0.3,momentum:+1}},{text:'התייחס בזהירות לתוצאות העתידיות',cost:0,effect:{approval:+0.5,gdp:+0.1}}],severity:1},
+  {type:'geopolitical',title:'גינוי בינלאומי',body:'גוף בינלאומי פרסם גינוי כלפי מדיניות הממשלה הנוכחית, מה שמעורר ויכוח על ריבונות מול לחץ חיצוני.',choices:[{text:'דחה את הביקורת הבינלאומית',cost:0,effect:{approval:+1.5,securityIndex:+3,momentum:+1}},{text:'הבע נכונות לדיאלוג',cost:0,effect:{approval:+0.3,securityIndex:-3}}],severity:3},
+
+  // ─── PRIMARIES & PARTY POLITICS ────────────────────────────────
+  {type:'crisis',title:'מאבק פנימי על מיקום ברשימה',body:'שני בכירים במפלגה נאבקים בפומבי על מיקום ריאלי ברשימה לקראת הבחירות.',choices:[{text:'התערב ותכריע באופן אישי',cost:0,effect:{approval:0,momentum:-1}},{text:'תן למוסדות המפלגה להכריע',cost:0,effect:{approval:+0.5,momentum:-0.3}}],severity:2},
+  {type:'opportunity',title:'הצטרפות כוכבת מגזר',body:'אישיות מוערכת מתחום {GROUP} הצטרפה לרשימת המועמדים שלנו במקום ריאלי.',choices:[{text:'קיים אירוע השקה גדול',cost:90000,effect:{approval:+2,momentum:+1.5,cash:-90000}},{text:'פרסם הודעה רגילה',cost:0,effect:{approval:+0.8}}],severity:1},
+  {type:'crisis',title:'פרישת ח"כ בכיר מהרשימה',body:'ח"כ ותיק ומוערך הודיע על פרישתו מהרשימה במחאה על "כיוון המפלגה".',choices:[{text:'נסה לשכנעו לחזור בו',cost:100000,effect:{approval:0,momentum:-1}},{text:'אחל לו הצלחה והמשך הלאה',cost:0,effect:{approval:-1,momentum:-1.5}}],severity:4},
+  {type:'opportunity',title:'תוצאות פריימריז מוצלחות',body:'הפריימריז הפנימיים הסתיימו בשקט יחסי וברוח חיובית, ללא דרמות מיותרות.',choices:[{text:'הצג חזית מאוחדת לתקשורת',cost:40000,effect:{approval:+1.5,momentum:+1}},{text:'המשך כרגיל לקמפיין',cost:0,effect:{approval:+0.5}}],severity:1},
+  {type:'crisis',title:'מועמד שנוי במחלוקת ברשימה',body:'מועמד במקום ריאלי ברשימה מתגלה כבעל עבר שנוי במחלוקת שעלול לפגוע בתדמית המפלגה.',choices:[{text:'הוצא אותו מהרשימה',cost:0,effect:{approval:+1,momentum:0}},{text:'הגן עליו ועל זכותו להתמודד',cost:0,effect:{approval:-1.5,risk:true}}],severity:3},
+
+  // ─── WILDCARD / RANDOM ──────────────────────────────────────────
+  {type:'opportunity',title:'תרומת ענק אנונימית',body:'תורם אנונימי העביר לקופת הקמפיין תרומה חוקית בסך {M} מיליון ש"ח.',choices:[{text:'קבל בברכה ופרסם בשקיפות',cost:0,effect:{cash:+1000000,approval:+0.5}},{text:'בדוק את מקור הכספים תחילה',cost:0,effect:{cash:+500000,approval:+1}}],severity:1},
+  {type:'crisis',title:'אסון טבע באזור הפריפריה',body:'שיטפונות קשים פגעו ב{CITY} וגרמו לנזק כבד לתשתיות ולבתי תושבים.',choices:[{text:'הכרז על מצב חירום ותקציב שיקום',cost:700000,effect:{approval:+3,cash:-700000}},{text:'הבע אהדה בלבד ללא תקציב',cost:0,effect:{approval:-2,momentum:-1.5}}],severity:5},
+  {type:'crisis',title:'תקלת תשתית ארצית',body:'תקלה במערכת החשמל הארצית גרמה להפסקות חשמל ממושכות ב{CITY} ובסביבתה.',choices:[{text:'הבטח חקירה ושדרוג תשתיות',cost:300000,effect:{approval:+1.5,cash:-300000}},{text:'האשם את הממשלה הקודמת בהזנחה',cost:0,effect:{approval:-0.5,momentum:-1}}],severity:3},
+  {type:'opportunity',title:'הישג ספורטיבי לאומי',body:'נבחרת הלאום זכתה בהישג בינלאומי מרשים, ורוח לאומית חיובית שטפה את המדינה.',choices:[{text:'ארח את הספורטאים באירוע קמפיין',cost:40000,effect:{approval:+1.5,momentum:+1}},{text:'ברך ברשת בלבד',cost:0,effect:{approval:+0.5}}],severity:1},
+  {type:'crisis',title:'מגפה מקומית מתפרצת',body:'התפרצות מחלה מדבקת ב{CITY} מעוררת חשש ציבורי ודרישה לתגובה ממשלתית מהירה.',choices:[{text:'הכרז על תוכנית בריאות חירום',cost:500000,effect:{approval:+2.5,cash:-500000}},{text:'הרגע את הציבור — "המצב בשליטה"',cost:0,effect:{approval:0,momentum:-0.5}}],severity:4},
+  {type:'opportunity',title:'פריצת דרך טכנולוגית',body:'חברת הזנק מקומית פיתחה טכנולוגיה פורצת דרך שמושכת תשומת לב והשקעות בינלאומיות.',choices:[{text:'אמץ את ההישג כסמל לחדשנות המדינה',cost:30000,effect:{approval:+1.5,gdp:+0.2,momentum:+1}},{text:'ברך בקצרה',cost:0,effect:{approval:+0.5}}],severity:1},
+  {type:'crisis',title:'תאונת עבודה קטלנית',body:'תאונת עבודה חמורה באתר בנייה ב{CITY} גרמה לאבדות בנפש ועוררה דרישה להסדרת ענף הבנייה.',choices:[{text:'הכרז על רפורמת בטיחות בעבודה',cost:250000,effect:{approval:+1.5,cash:-250000}},{text:'הבע תנחומים בלבד',cost:0,effect:{approval:-1,momentum:-1}}],severity:4},
+  {type:'opportunity',title:'דירוג בינלאומי חיובי',body:'המדינה עלתה במדרג מדד "קלות עשיית עסקים" העולמי בעקבות רפורמות אחרונות.',choices:[{text:'נצל זאת לקמפיין כלכלי',cost:60000,effect:{approval:+1.5,gdp:+0.2,momentum:+1}},{text:'ציין בקצרה בנאום הבא',cost:0,effect:{approval:+0.5}}],severity:1},
+  {type:'crisis',title:'תקלת אבטחת מידע',body:'פרצת אבטחה במאגר מידע ממשלתי חשפה פרטים אישיים של מיליוני אזרחים.',choices:[{text:'הכרז על חקירה ושדרוג אבטחה',cost:400000,effect:{approval:+1,cash:-400000}},{text:'מזער את חומרת האירוע',cost:0,effect:{approval:-2,risk:true}}],severity:4},
+  {type:'opportunity',title:'תרומת זמן של מתנדבים',body:'גל התנדבות ספונטני הביא אלפי מתנדבים חדשים למטה הקמפיין בתוך יממה אחת.',choices:[{text:'ארגן אותם במהירות לפעילות שטח',cost:50000,effect:{volunteers:+800,momentum:+1}},{text:'קלוט בהדרגה',cost:0,effect:{volunteers:+400}}],severity:1},
+  {type:'crisis',title:'משבר אקלים מקומי',body:'גל חום קיצוני ב{CITY} גרם לעומס על מערכת הבריאות ולביקורת על מוכנות המדינה למשבר האקלים.',choices:[{text:'הכרז על תוכנית הסתגלות אקלימית',cost:350000,effect:{approval:+1.5,cash:-350000}},{text:'הגדר כ"מזג אוויר חריג בלבד"',cost:0,effect:{approval:-1,momentum:-1}}],severity:3},
+  {type:'opportunity',title:'הסכם קואליציוני עקרוני',body:'גורמים בכירים ב{PARTY} רמזו בפומבי על נכונות עקרונית לשיתוף פעולה קואליציוני עתידי.',choices:[{text:'הגב בחיוב זהיר',cost:0,effect:{approval:+1,momentum:+0.5}},{text:'שמור על עמימות אסטרטגית',cost:0,effect:{approval:+0.3}}],severity:1},
+  {type:'crisis',title:'משבר תחבורה ציבורית',body:'קריסת מערכת הרכבות הקלות ב{CITY} גרמה לשיתוק תנועה ולזעם נוסעים.',choices:[{text:'הבטח השקעה דחופה בתחבורה',cost:450000,effect:{approval:+1.5,cash:-450000}},{text:'האשם את הקבלן המבצע',cost:0,effect:{approval:-0.5,momentum:-0.5}}],severity:3},
+  {type:'opportunity',title:'נתוני תיירות שיא',body:'משרד התיירות מדווח על שיא כל הזמנים במספר התיירים שביקרו במדינה השנה.',choices:[{text:'הצג כהישג כלכלי-דיפלומטי',cost:40000,effect:{approval:+1.5,gdp:+0.2,momentum:+1}},{text:'ציין בקצרה',cost:0,effect:{approval:+0.5}}],severity:1},
+  {type:'crisis',title:'מחסור בכוח אדם רפואי',body:'בתי חולים ב{CITY} מדווחים על מחסור חמור ברופאים ואחיות, ותורים מתארכים בלי סוף.',choices:[{text:'הכרז על תוכנית גיוס דחופה',cost:400000,effect:{approval:+2,cash:-400000}},{text:'דחה לטיפול עתידי',cost:0,effect:{approval:-1.5,momentum:-1}}],severity:3},
+  {type:'opportunity',title:'הסכם איגוד עובדים תומך',body:'איגוד עובדים גדול הכריז על תמיכה רשמית בעמדותינו בנושאי שוק העבודה.',choices:[{text:'חתום על הסכם שיתוף פעולה',cost:80000,effect:{approval:+1.5,momentum:+1,cash:-80000}},{text:'קבל את התמיכה ללא התחייבות',cost:0,effect:{approval:+0.5}}],severity:1},
+  {type:'crisis',title:'שערוריית זיהום סביבתי',body:'מפעל תעשייתי ב{CITY} נחשד בזיהום מקורות מים, ותושבים דורשים פעולה ממשלתית מיידית.',choices:[{text:'דרוש סגירה זמנית של המפעל',cost:0,effect:{approval:+2,momentum:+1,gdp:-0.1}},{text:'הבטח חקירה מבלי לפגוע בתעסוקה',cost:0,effect:{approval:+0.5}}],severity:3},
+  {type:'opportunity',title:'פרס בינלאומי יוקרתי',body:'אזרח מהמדינה זכה בפרס בינלאומי יוקרתי בתחום המדע, מה שמעלה את קרנה הבינלאומית של המדינה.',choices:[{text:'ארח אותו באירוע ממלכתי',cost:50000,effect:{approval:+1.5,momentum:+1}},{text:'שלח איגרת ברכה',cost:5000,effect:{approval:+0.5}}],severity:1},
+  {type:'crisis',title:'התנגשות בין שרים בממשלה',body:'שני שרים בכירים מתפלגים מתנגשים פומבית סביב סמכויות חופפות בין משרדיהם.',choices:[{text:'הסדר את חלוקת הסמכויות',cost:100000,effect:{approval:+0.5,momentum:+0.5}},{text:'תן להם לפתור זאת בעצמם',cost:0,effect:{approval:-1,momentum:-1}}],severity:2},
+  {type:'opportunity',title:'גיוס משקיע אסטרטגי זר',body:'קרן השקעות בינלאומית הודיעה על השקעה של {M} מיליארד דולר בכלכלת המדינה.',choices:[{text:'הצג כהוכחה לאמון בינלאומי',cost:0,effect:{approval:+2,gdp:+0.3,momentum:+1}},{text:'התייחס בזהירות',cost:0,effect:{approval:+0.5}}],severity:1},
+  {type:'crisis',title:'משבר אנרגיה חורפי',body:'גל קור קיצוני העלה את הביקוש לחשמל לרמות שיא, וקיים חשש מהפסקות חשמל מתוכננות.',choices:[{text:'הכרז על תוכנית חירום אנרגטית',cost:300000,effect:{approval:+1.5,cash:-300000}},{text:'קרא לציבור לחסוך בצריכה',cost:0,effect:{approval:0}}],severity:3},
+];
+
+const EVENT_VARS = {
+  M: ['5','12','28','50','3','18'],
+  CH: ['12','13','11','14','24','2'],
+  QUOTE: ['המצביעים לא מבינים כלכלה','עכשיו אפשר לדבר ישירות','יש לנו תוכניות שאנחנו לא מגלים','הבוחרים ילעסו כל מה שנגיד להם','אנחנו מנצחים בכל מקרה'],
+  TOPIC: ['מדיניות הדיור','רפורמת הביטחון','ניהול התקציב','הסכמי שלום','מינוי שרים'],
+  BORDER: ['לבנון','עזה','סוריה','ירדן'],
+  NUM: ['3','12','45','8','100','7'],
+  PCT: ['2.3','4.5','6.8','1.9','3.1'],
+  PCT2: ['7.2','5.4','9.1','3.3'],
+  CITY: ['תל אביב','ירושלים','חיפה','אשדוד','באר שבע'],
+  PARTY: ['הליכוד','יש עתיד','ש"ס','המחנה הממלכתי'],
+  POLLSTER: ['מדגם','קנטאר','Direct Polls','פאנלס פוליטיקס'],
+  ISSUE: ['הגיוס לצבא','מדיניות הדיור','עלויות הדת','תקציב הביטחון'],
+  POLICY: ['רפורמת הבריאות','מיסי הדלק','חוק הסדרה','הקפאת שכר'],
+  MK: ['ח"כ שמואל בן-דוד','ח"כ ענת רוזן','ח"כ יוסי כהן','ח"כ דנה לוי'],
+  YEAR: ['2014','2016','2018','2019'],
+  COUNTRY: ['ארצות הברית','מצרים','ירדן','גרמניה','צרפת','בריטניה','יוון','קפריסין','הודו','יפן'],
+  GROUP: ['רופאים','הייטקיסטים','מורים','חקלאים','נשים עצמאיות','אנשי עסקים קטנים','אקדמאים','אמנים','עורכי דין','מהנדסים'],
+};
+
+const COMMENTATOR_TEMPLATES_POS = [
+  'ביצועים מרשימים הערב — המסר חדר לקהל היעד בצורה ברורה.',
+  'הנאום הזה ישנה את הסקרים. ראינו כאן מנהיגות אמיתית.',
+  'הציבור מחפש בדיוק את ה"נראטיב הזה" — הקמפיין בנה אותו נכון.',
+  'ממה שאני שומע מהשטח — יש תנועה מהירה לכיוון הזה.',
+  'הקואליציה הפוטנציאלית מתגבשת — זה נראה כמו ממשלה.',
+  'מהלך חכם. היריבים לא יכלו להגיב ביעילות.',
+];
+const COMMENTATOR_TEMPLATES_NEG = [
+  'נראה שהקמפיין הפסיד את היוזמה הערב. ייתכן שזה מהלך שיחזור לרדוף אותם.',
+  'הנתונים הכלכליים הנוכחיים הם משקולת כבדה — קשה לספר סיפור שונה.',
+  'מאחורי הקלעים מדווחים על שסעים — עד מתי ניתן לשמור על עמוד שדרה?',
+  'הסקרים לא משקרים. מה שנראה יפה בנאום לא תמיד מתורגם לקלפי.',
+  'הפרשנות בתקשורת הצינית היא שכאן נפלה טעות אסטרטגית.',
+  'הבסיס מאוכזב. הכריזמה לא מספיקה — צריך מדיניות קונקרטית.',
+];
+const COMMENTATOR_TEMPLATES_NEU = [
+  'מוקדם לדעת. הסקר הבא יגלה אם ה"אפקט" היה אמיתי.',
+  'תגובה סבירה. לא מרגשת, אבל גם לא מזיקה.',
+  'המשחק הפוליטי פתוח לחלוטין — לשני הצדדים יש קלפים.',
+  'המשך לצפות בנתונים — הדינמיקה משתנה כל יום.',
+  'כאן יש ויכוח אמיתי על כיוון המדינה. שני הצדדים מייצגים חזון.',
+];
+
+// ─── PCG: GENERATE MKs ──────────────────────────────────────────────
+function generateMKList(parties, count = 120) {
+  const mks = [];
+  let id = 1;
+  const realNames = [
+    {n:'בנימין נתניהו',r:'יו"ר הליכוד, ראש ממשלה לשעבר'},{n:'יאיר לפיד',r:'יו"ר יש עתיד'},{n:'בני גנץ',r:'יו"ר המחנה הממלכתי'},{n:'אריה דרעי',r:'יו"ר ש"ס'},{n:'בצלאל סמוטריץ\'',r:'יו"ר הציונות הדתית'},{n:'איתמר בן גביר',r:'יו"ר עוצמה יהודית'},{n:'יצחק גולדקנופף',r:'יו"ר יהדות התורה'},{n:'משה גפני',r:'ח"כ בכיר יהדות התורה'},{n:'יאיר גולן',r:'ח"כ הדמוקרטים'},{n:'אביגדור ליברמן',r:'יו"ר ישראל ביתנו'},{n:'מנסור עבאס',r:'יו"ר רע"מ'},{n:'יואב גלנט',r:'שר ביטחון לשעבר'},{n:'ניר ברקת',r:'שר כלכלה לשעבר'},{n:'מירי רגב',r:'שר בכיר הליכוד'},{n:'שלמה קרעי',r:'ח"כ הליכוד'},{n:'אמיר אוחנה',r:'יו"ר הכנסת לשעבר'},{n:'גלית דיסטל אטבריאן',r:'ח"כ הליכוד'},{n:'מאי גולן',r:'ח"כ הליכוד'},{n:'יולי אדלשטיין',r:'ח"כ בכיר הליכוד'},{n:'זאב אלקין',r:'ח"כ מחנה ממלכתי'},{n:'קארין אלהרר',r:'ח"כ יש עתיד'},{n:'מיקי לוי',r:'ח"כ לשעבר'},{n:'מירב בן ארי',r:'ח"כ כולנו לשעבר'},{n:'אחמד טיבי',r:'ח"כ תע"ל'},{n:'איימן עודה',r:'ח"כ חד"ש'}
+  ];
+  const isIL = G.arena === 'IL';
+  for (let i = 0; i < count; i++) {
+    const party = parties[i % parties.length];
+    const isReal = isIL && i < realNames.length;
+    const name = isReal ? realNames[i].n : (isIL ? `${rnd(MK_FIRST_NAMES)} ${rnd(MK_LAST_NAMES)}` : `${rnd(US_FIRST_NAMES)} ${rnd(US_LAST_NAMES)}`);
+    const role = isReal ? realNames[i].r : (isIL ? rnd(MK_ROLES) : rnd(US_ROLES));
+    mks.push({
+      id: id++,
+      name, role,
+      party: party.name,
+      partyColor: party.color || '#2563eb',
+      charisma: ri(40, 95),
+      corruption: ri(0, 60),
+      mediaSavvy: ri(30, 99),
+      ideologyScore: ri(1, 10),
+      loyalty: ri(55, 99),
+      influence: ri(30, 100),
+      quitChance: ri(0, 20),
+      historyBadge: Math.random() > 0.7 ? rnd(['לשעבר שר','ח"כ ותיק','מנהיג תנועה','שגריר לשעבר','עורך דין']) : null,
+    });
+  }
+  return mks;
+}
+
+// ─── PCG: GENERATE CITIES / DISTRICTS ─────────────────────────────
+const DISTRICT_TYPE_NAMES_US = ['מחוז עירוני','מחוז פרברי','מחוז כפרי','מחוז תעשייתי','מחוז חוף'];
+function generateCities(arena) {
+  if (arena === 'IL') {
+    return CITY_NAMES_IL.map((name, i) => ({
+      name,
+      pop: ri(15000, 990000),
+      trend: rnd(['ימני חזק','ימין','מרכז-ימין','מרכז','מרכז-שמאל','שמאל','חרדי','ערבי','מעורב']),
+      volunteers: ri(50, 600),
+      weight: parseFloat((0.5 + Math.random() * 1.5).toFixed(2)),
+      support: ri(25, 65), // player support %
+      branches: 0,
+      rallies: 0,
+      demographics: {
+        orthodox: ri(0, 40),
+        secular: ri(20, 80),
+        arab: ri(0, 30),
+        workingClass: ri(20, 60),
+        suburban: ri(10, 50),
+      }
+    }));
+  } else {
+    // Generate 200+ micro-districts across all 50 states (4-5 per state)
+    const districts = [];
+    STATE_NAMES_US.forEach((state, sIdx) => {
+      const numDistricts = (sIdx % 6 === 0) ? 5 : 4; // ensures total > 200
+      const stateTrend = rnd(['Solid R','Lean R','Swing','Lean D','Solid D']);
+      for (let d = 1; d <= numDistricts; d++) {
+        const districtType = rnd(DISTRICT_TYPE_NAMES_US);
+        districts.push({
+          name: `${state} — מחוז ${d}`,
+          state,
+          stateIdx: sIdx,
+          districtType,
+          pop: ri(40000, 1800000),
+          trend: Math.random() > 0.7 ? rnd(['Solid R','Lean R','Swing','Lean D','Solid D']) : stateTrend,
+          volunteers: ri(50, 1200),
+          weight: parseFloat((0.3 + Math.random() * 1.4).toFixed(2)),
+          support: ri(28, 68),
+          branches: 0,
+          rallies: 0,
+          demographics: {
+            evangelical: ri(5, 65),
+            urban: ri(10, 90),
+            hispanic: ri(2, 45),
+            africanAmerican: ri(2, 40),
+            suburban: ri(15, 60),
+          }
+        });
+      }
+    });
+    return districts;
+  }
+}
+
+// ─── PCG: GENERATE POLLS — 4-NETWORK POLLING MATRIX ──────────────
+// Each network has a distinct house-effect (ideological lean bias) and its own
+// standard deviation for statistical noise, simulating real-world polling variance.
+const POLL_NETWORKS_IL = [
+  {name:'ערוץ 12 - מדגם', lean:'left',  leanStrength:0.18, stdDev:1.6, internal:false},
+  {name:'ערוץ 14 - דירקט פולס', lean:'right', leanStrength:0.22, stdDev:1.9, internal:false},
+  {name:'סקר פנימי - מטה הקמפיין', lean:'none', leanStrength:0, stdDev:0.9, internal:true, internalBonus:1.4},
+  {name:'קנטאר - כאן 11', lean:'none', leanStrength:0.05, stdDev:2.3, internal:false},
+];
+const POLL_NETWORKS_US = [
+  {name:'Fox News Poll', lean:'right', leanStrength:0.20, stdDev:2.0, internal:false},
+  {name:'CNN / SSRS', lean:'left', leanStrength:0.20, stdDev:2.1, internal:false},
+  {name:'Internal Campaign Tracking', lean:'none', leanStrength:0, stdDev:1.0, internal:true, internalBonus:1.6},
+  {name:'NYT/Siena', lean:'none', leanStrength:0.04, stdDev:2.4, internal:false},
+];
+// Legacy aliases kept for backward compatibility with any external references.
+const POLL_COMPANIES_IL = POLL_NETWORKS_IL.map(n => n.name);
+const POLL_COMPANIES_US = POLL_NETWORKS_US.map(n => n.name);
+
+// Box-Muller transform: produces normally-distributed noise (true std-dev formula)
+function gaussianNoise(mean, stdDev) {
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  const z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+  return mean + z * stdDev;
+}
+
+function networkHouseEffect(network, party, isPlayer) {
+  let bias = 0;
+  if (network.lean === 'right') bias = (party.ideology - 5.5) * network.leanStrength;
+  else if (network.lean === 'left') bias = (5.5 - party.ideology) * network.leanStrength;
+  if (network.internal && isPlayer) bias += network.internalBonus;
+  return bias;
+}
+
+function generatePolls() {
+  const networks = G.arena === 'IL' ? POLL_NETWORKS_IL : POLL_NETWORKS_US;
+  return networks.map(network => ({
+    company: network.name,
+    internal: !!network.internal,
+    date: `יום ${G.totalDays - G.daysLeft + 1}`,
+    results: G.parties.map(p => {
+      const isPlayer = p.name === G.playerParty.name;
+      const bias = networkHouseEffect(network, p, isPlayer);
+      const noise = gaussianNoise(0, network.stdDev);
+      return { name: p.name, pct: Math.max(2, +(p.strength + bias + noise).toFixed(1)), color: p.color };
+    }),
+    marginOfError: (network.stdDev * 1.96).toFixed(1), // 95% confidence interval
+  }));
+}
+
+// ─── UTILITY ───────────────────────────────────────────────────────
+function rnd(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function ri(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function rf(min, max) { return +(Math.random() * (max - min) + min).toFixed(2); }
+function formatCash(n) {
+  if (n >= 1000000) return `${G.arena === 'IL' ? '₪' : '$'}${(n/1000000).toFixed(1)}M`;
+  if (n >= 1000) return `${G.arena === 'IL' ? '₪' : '$'}${(n/1000).toFixed(0)}K`;
+  return `${G.arena === 'IL' ? '₪' : '$'}${n}`;
+}
+function fillVars(str) {
+  return str.replace(/\{(\w+)\}/g, (_, k) => rnd(EVENT_VARS[k] || [k]));
+}
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+// ─── SETUP ─────────────────────────────────────────────────────────
+function selectArena(arena) {
+  G.arena = arena;
+  document.querySelectorAll('.arena-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`arena-${arena}`).classList.add('active');
+  populateYearSelect();
+}
+
+function selectDiff(d) {
+  G.difficulty = d;
+  document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`diff-${d}`).classList.add('active');
+}
+
+function populateYearSelect() {
+  const db = G.arena === 'IL' ? IL_ELECTIONS : US_ELECTIONS;
+  const sel = document.getElementById('year-select');
+  sel.innerHTML = '';
+  Object.entries(db).reverse().forEach(([key, val]) => {
+    const opt = document.createElement('option');
+    opt.value = key; opt.textContent = val.title;
+    sel.appendChild(opt);
+  });
+  G.selectedYear = Object.keys(db).slice(-1)[0];
+  sel.value = G.selectedYear;
+  populatePartySelect();
+  sel.onchange = () => { G.selectedYear = sel.value; populatePartySelect(); };
+}
+
+function populatePartySelect() {
+  const db = G.arena === 'IL' ? IL_ELECTIONS : US_ELECTIONS;
+  const election = db[G.selectedYear] || db[Object.keys(db)[0]];
+  const sel = document.getElementById('player-party-select');
+  sel.innerHTML = '';
+  election.parties.forEach((p, i) => {
+    const opt = document.createElement('option');
+    opt.value = i; opt.textContent = `${p.name} — ${p.strength}%`;
+    sel.appendChild(opt);
+  });
+}
+
+function initGame() {
+  const db = G.arena === 'IL' ? IL_ELECTIONS : US_ELECTIONS;
+  G.selectedYear = document.getElementById('year-select').value;
+  const election = db[G.selectedYear];
+  G.playerPartyIndex = parseInt(document.getElementById('player-party-select').value);
+
+  // Set difficulty
+  const diffMap = { easy: {days:45,cash:8000000}, normal: {days:40,cash:5000000}, hard: {days:35,cash:3000000} };
+  const diff = diffMap[G.difficulty];
+  G.daysLeft = diff.days;
+  G.totalDays = diff.days;
+  G.cash = diff.cash;
+
+  // Clone parties with noise
+  G.parties = election.parties.map((p, i) => ({
+    ...p, strength: p.strength, initialStrength: p.strength, trend: 0,
+    color: p.color || `hsl(${(i * 137.5) % 360}, 70%, 55%)`,
+    color: p.color || '#2563eb',
+  }));
+  G.playerParty = G.parties[G.playerPartyIndex];
+  G.approval = G.playerParty.strength;
+  G.approvalHistory = [G.approval];
+
+  // Generate content
+  G.mkList = generateMKList(G.parties, G.arena === 'IL' ? 120 : 538);
+  G.cities = generateCities(G.arena);
+  G.polls = generatePolls();
+  G.pendingEvents = [];
+  G.logEntries = [];
+  G.commentatorQueue = [];
+  G.coalitionStatus = {};
+  G.parties.forEach(p => {
+    if (G.parties.indexOf(p) !== G.playerPartyIndex) {
+      G.coalitionStatus[p.name] = {status: 'negotiating', demands: generateDemands(), portfolioOffered: null};
+      G.coalitionStatus[p.name].offeredPortfolio = G.coalitionStatus[p.name].demands.portfolio;
+    }
+  });
+  G.seats = estimateSeats();
+  G.volunteers = ri(1500, 4000);
+  G.momentum = ri(1, 5);
+  G.securityIndex = ri(15, 40);
+  G.activeScandalLevel = 0;
+  G.eventCooldown = 0;
+
+  // Show game
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'block';
+  document.getElementById('topbar-arena-label').textContent = election.title;
+
+  // Initial render
+  addLog('event', 'מערכת הבחירות נפתחה רשמית. מסלול הקמפיין מתחיל!');
+  addLog('media', `מטה ${G.playerParty.name} הוקם ומוכן לפעולה. ${G.volunteers.toLocaleString()} מתנדבים רשומים.`);
+  addCommentator(true, `מסך הבחירות נפתח — ${G.playerParty.name} נכנסת לזירה עם ${G.playerParty.strength.toFixed(1)}% בסקרים.`);
+
+  triggerEvent();
+  renderAll();
+
+  // Start news ticker
+  startNewsTicker();
+}
+
+const CABINET_PORTFOLIOS = ['תיק האוצר','תיק הביטחון','תיק החוץ','תיק הפנים','תיק הבריאות','תיק החינוך','תיק המשפטים','תיק התחבורה','תיק הרווחה','תיק הבינוי והשיכון','תיק התקשורת','תיק הגנת הסביבה'];
+function generateDemands() {
+  const demands = [
+    CABINET_PORTFOLIOS,
+    ['חוק גיוס חדש','תקציב פנימוני נוסף','הקפאת רפורמת הדת','ביטול חוק ההסדרה','תוספת לרשת הביטחון','רפורמה במערכת המשפט','תקציב ייעודי למגזר','חוק הסדרה חדש','הגדלת תקציב הרווחה','רפורמה בדיני העבודה']
+  ];
+  return {
+    portfolio: rnd(demands[0]),
+    policy: rnd(demands[1]),
+    seatBonus: ri(0, 3),
+    minSeats: ri(4, 12),
+  };
+}
+
+function estimateSeats() {
+  const total = G.arena === 'IL' ? 120 : 538;
+  return Math.round((G.playerParty.strength / 100) * total);
+}
+
+// ─── TURN ADVANCE ──────────────────────────────────────────────────
+function advanceTurn() {
+  G.daysLeft--;
+  G.currentTurn++;
+
+  if (G.daysLeft <= 0) {
+    runElection();
+    return;
+  }
+
+  // Economic drift
+  G.gdp = clamp(G.gdp + rf(-0.15, 0.15), 0.5, 7.0);
+  G.inflation = clamp(G.inflation + rf(-0.2, 0.3), 1.0, 12.0);
+  G.unemployment = clamp(G.unemployment + rf(-0.2, 0.2), 2.5, 15.0);
+
+  // Security drift
+  G.securityIndex = clamp(G.securityIndex + ri(-5, 8), 0, 100);
+
+  // Scandal decay
+  if (G.activeScandalLevel > 0) G.activeScandalLevel = Math.max(0, G.activeScandalLevel - 0.5);
+
+  // Random party movements
+  G.parties.forEach((p, i) => {
+    if (i !== G.playerPartyIndex) {
+      const change = rf(-0.8, 0.8);
+      p.strength = clamp(p.strength + change, 2, 40);
+      p.trend = change;
+    }
+  });
+
+  // Player party follows approval
+  const playerOld = G.playerParty.strength;
+  G.playerParty.strength = clamp(G.approval, 3, 55);
+  G.playerParty.trend = G.playerParty.strength - playerOld;
+
+  // Momentum decay
+  G.momentum = clamp(G.momentum * 0.85, -10, 15);
+  G.approval = clamp(G.approval + G.momentum * 0.1 + rf(-0.3, 0.3), 3, 60);
+  G.approvalHistory.push(G.approval);
+
+  // Income
+  G.cash = Math.max(0, G.cash + ri(100000, 300000));
+
+  // Seats
+  G.seats = estimateSeats();
+
+  // New polls every 3 turns
+  if (G.currentTurn % 3 === 0) G.polls = generatePolls();
+
+  // Events
+  G.eventCooldown = Math.max(0, G.eventCooldown - 1);
+  if (G.eventCooldown <= 0 && Math.random() > 0.3) triggerEvent();
+
+  // Commentator
+  if (Math.random() > 0.5) addCommentatorRandom();
+
+  // Log
+  addLog('event', `יום ${G.totalDays - G.daysLeft}: ${G.playerParty.name} עומדת על ${G.playerParty.strength.toFixed(1)}% בסקרים. ${G.daysLeft} ימים לבחירות.`);
+
+  renderAll();
+  showTab('command');
+}
+
+// ─── ACTIONS ───────────────────────────────────────────────────────
+const ACTIONS = {
+  press_conf: {cost:200000, fn:() => {
+    G.approval = clamp(G.approval + rf(1.5, 2.5), 3, 60);
+    G.momentum = clamp(G.momentum + 1, -10, 15);
+    addLog('media', 'כנס עיתונאים הצליח! עיתונאים מובילים שידרו את המסרים שלנו.');
+    addCommentator(true, 'כנס עיתונאים מוצלח — המסרים חדרו היטב לקהל היעד.');
+    toast('כנס עיתונאים הצליח! +2% תמיכה', 'success');
+  }},
+  tv_interview: {cost:150000, fn:() => {
+    const success = Math.random() > 0.3;
+    if (success) {
+      G.approval = clamp(G.approval + rf(1, 2), 3, 60);
+      addLog('media', 'ראיון טלוויזיוני מוצלח! הנאמרים קיבלו הד חיובי.');
+      toast('ראיון הצליח! תמיכה עלתה', 'success');
+    } else {
+      G.approval = clamp(G.approval - rf(0.5, 1.5), 3, 60);
+      addLog('media', 'ראיון קשה — השאלות אתגרו. קצת נזק לדימוי.');
+      toast('הראיון היה מאתגר. קצת ירידה בתמיכה.', 'warn');
+    }
+  }},
+  digital_ads: {cost:300000, fn:() => {
+    G.approval = clamp(G.approval + rf(1.5, 3.5), 3, 60);
+    G.momentum = clamp(G.momentum + 1.5, -10, 15);
+    addLog('media', 'קמפיין דיגיטלי הושק! טווח הגעה: מיליוני משתמשים בפלטפורמות.');
+    toast('קמפיין דיגיטלי פעיל! +3% תמיכה בצעירים', 'success');
+  }},
+  attack_ad: {cost:250000, fn:() => {
+    const rival = G.parties[(G.playerPartyIndex + 1) % G.parties.length];
+    rival.strength = clamp(rival.strength - rf(1, 2.5), 2, 40);
+    G.approval = clamp(G.approval + rf(0, 1), 3, 60);
+    const backfire = Math.random() > 0.7;
+    if (backfire) {
+      G.approval = clamp(G.approval - rf(0.5, 1.5), 3, 60);
+      addLog('media', `פרסום התקפה נגד ${rival.name} — הציבור הגיב קשה. חלק ראה "פוליטיקה מלוכלכת".`);
+      toast('פרסום ההתקפה חזר אלינו! קצת ירידה.', 'warn');
+    } else {
+      addLog('media', `פרסום התקפה נגד ${rival.name} הצליח! הם עלו לכותרות שליליות.`);
+      toast(`${rival.name} פגועים! -2% שם`, 'success');
+    }
+  }},
+  rally: {cost:400000, fn:() => {
+    const city = rnd(G.cities);
+    city.support = clamp(city.support + ri(3, 7), 0, 100);
+    G.volunteers += ri(200, 600);
+    G.momentum = clamp(G.momentum + 2.5, -10, 15);
+    G.approval = clamp(G.approval + rf(0.5, 2), 3, 60);
+    addLog('field', `עצרת ענק ב${city.name}! ${ri(3000, 20000).toLocaleString()} משתתפים. מומנטום אדיר.`);
+    toast(`עצרת ב${city.name} הצליחה! +מומנטום`, 'success');
+  }},
+  recruit: {cost:100000, fn:() => {
+    const added = ri(400, 800);
+    G.volunteers += added;
+    addLog('field', `${added} מתנדבים חדשים נרשמו בפריסה ארצית.`);
+    toast(`+${added} מתנדבים!`, 'success');
+  }},
+  canvass: {cost:180000, fn:() => {
+    const city = rnd(G.cities);
+    city.support = clamp(city.support + ri(2, 5), 0, 100);
+    G.approval = clamp(G.approval + rf(0.5, 1.5), 3, 60);
+    addLog('field', `סיור שטח ב${city.name}: פעילים פגשו אלפי תושבים. תמיכה עלתה ב${ri(2,4)}%.`);
+    toast(`סיור שטח ב${city.name} הניב תוצאות!`, 'success');
+  }},
+  office: {cost:500000, fn:() => {
+    const city = rnd(G.cities);
+    city.branches = (city.branches || 0) + 1;
+    city.support = clamp(city.support + ri(4, 8), 0, 100);
+    G.approval = clamp(G.approval + rf(0.3, 1), 3, 60);
+    addLog('field', `סניף קמפיין נפתח ב${city.name}! מרכז לפעילות מתנדבים ותמיכת מצביעים.`);
+    toast(`סניף חדש ב${city.name}!`, 'success');
+  }},
+  fundraise: {cost:0, fn:() => {
+    const raised = ri(400000, 900000);
+    G.cash += raised;
+    addLog('field', `גיוס כספים הצליח! ${formatCash(raised)} נכנסו לקופת הקמפיין.`);
+    toast(`גיוס כספים: +${formatCash(raised)}!`, 'success');
+  }},
+  opposition_research: {cost:350000, fn:() => {
+    const rival = rnd(G.parties.filter((_,i) => i !== G.playerPartyIndex));
+    const scandal = ri(1,4);
+    rival.strength = clamp(rival.strength - scandal * 0.5, 2, 40);
+    addLog('coalition', `מחקר אופוזיציה: נמצאו ממצאים מעניינים על ${rival.name}. ${scandal > 2 ? 'נזק תדמיתי משמעותי.' : 'מידע שמור.'}`);
+    toast(`מחקר חשף מידע על ${rival.name}!`, 'info');
+  }},
+  debate_prep: {cost:100000, fn:() => {
+    G.debatePrepBonus = (G.debatePrepBonus || 0) + 2;
+    addLog('media', 'הכנה לעימות: יועצים מסבירים על נקודות החולשה של היריבים.');
+    toast('הכנה לעימות! +2% בוועידה הבאה', 'info');
+  }},
+  spin_doctor: {cost:200000, fn:() => {
+    G.activeScandalLevel = Math.max(0, G.activeScandalLevel - 2);
+    G.approval = clamp(G.approval + rf(0.5, 1.5), 3, 60);
+    addLog('media', 'יועץ תקשורת בכיר ניהל "שינוי נרטיב" מוצלח. השיח בתקשורת השתנה.');
+    toast('נרטיב שונה! שערוריה מתמוססת', 'success');
+  }},
+  security_speech: {cost:50000, fn:() => {
+    G.approval = clamp(G.approval + rf(0.8, 1.8), 3, 60);
+    addLog('media', 'נאום ביטחון חריף: "לא ניסוג, לא נרכין ראש." — קיבל עמוד ראשי.');
+    toast('נאום ביטחון חזק! +תמיכה בימין', 'success');
+  }},
+  social_promise: {cost:50000, fn:() => {
+    G.approval = clamp(G.approval + rf(0.8, 1.8), 3, 60);
+    addLog('media', 'הבטחה חברתית: "ממשלה שאכפת לה." — כבשה את הרשתות.');
+    toast('הבטחה חברתית! +תמיכה במרכז', 'success');
+  }},
+  economy_plan: {cost:80000, fn:() => {
+    G.gdp = clamp(G.gdp + 0.2, 0.5, 7.0);
+    G.approval = clamp(G.approval + rf(0.5, 1.5), 3, 60);
+    addLog('economy', 'תוכנית כלכלית הוצגה עם פרטים מלאים. כלכלנים הגיבו בחיוב.');
+    toast('תוכנית כלכלית פורסמה!', 'info');
+  }},
+  coalition_signal: {cost:30000, fn:() => {
+    addLog('coalition', 'איתות קואליציה נשלח: "דלתות פתוחות לכל שותף אחראי."');
+    Object.keys(G.coalitionStatus).forEach(p => {
+      if (G.coalitionStatus[p].status === 'refused') {
+        if (Math.random() > 0.5) G.coalitionStatus[p].status = 'negotiating';
+      }
+    });
+    toast('איתות קואליציה נשלח!', 'info');
+  }},
+};
+
+function doAction(key) {
+  const action = ACTIONS[key];
+  if (!action) return;
+  if (G.cash < action.cost) {
+    toast('אין מספיק תקציב!', 'error');
+    return;
+  }
+  G.cash -= action.cost;
+  action.fn();
+  G.seats = estimateSeats();
+  renderAll();
+}
+
+// ─── EVENT ENGINE ──────────────────────────────────────────────────
+function triggerEvent() {
+  const template = rnd(EVENT_TEMPLATES);
+  const event = {
+    ...template,
+    title: fillVars(template.title),
+    body: fillVars(template.body),
+    choices: template.choices.map(c => ({...c, text: fillVars(c.text)})),
+    id: Date.now(),
+    resolved: false,
+  };
+  G.pendingEvents.unshift(event);
+  if (G.pendingEvents.length > 3) G.pendingEvents = G.pendingEvents.slice(0, 3);
+  G.eventCooldown = ri(2, 5);
+  addLog('event', `אירוע חדש: ${event.title}`);
+}
+
+function resolveEvent(eventId, choiceIdx) {
+  const evt = G.pendingEvents.find(e => e.id === eventId);
+  if (!evt || evt.resolved) return;
+  evt.resolved = true;
+  const choice = evt.choices[choiceIdx];
+  const eff = choice.effect || {};
+
+  if (eff.approval) G.approval = clamp(G.approval + eff.approval, 3, 60);
+  if (eff.momentum) G.momentum = clamp(G.momentum + eff.momentum, -10, 15);
+  if (eff.cash) G.cash = Math.max(0, G.cash + eff.cash);
+  if (eff.gdp) G.gdp = clamp(G.gdp + eff.gdp, 0.5, 7.0);
+  if (eff.securityIndex) G.securityIndex = clamp(G.securityIndex + eff.securityIndex, 0, 100);
+  if (eff.inflation) G.inflation = clamp(G.inflation + eff.inflation, 1.0, 12.0);
+  if (eff.volunteers) G.volunteers += eff.volunteers;
+  if (eff.risk && Math.random() > 0.4) {
+    G.activeScandalLevel = clamp(G.activeScandalLevel + ri(1,3), 0, 10);
+    addLog('event', 'הסיכון התממש — נזק תדמיתי חלקי.');
+  }
+
+  G.pendingEvents = G.pendingEvents.filter(e => !e.resolved);
+  G.resolvedEvents.push({...evt, chosenText: choice.text});
+  G.seats = estimateSeats();
+
+  addLog('event', `${evt.title} → ${choice.text}`);
+  addCommentatorRandom();
+  toast(`${evt.title}: ${choice.text}`, 'info');
+  renderAll();
+}
+
+// ─── COALITION ─────────────────────────────────────────────────────
+function setOfferedPortfolio(partyName, portfolio) {
+  const cs = G.coalitionStatus[partyName];
+  if (cs) cs.offeredPortfolio = portfolio;
+}
+
+function ideologyDistance(party) {
+  return Math.abs((G.playerParty.ideology || 5) - (party.ideology || 5));
+}
+
+function negotiateCoalition(partyName) {
+  const cs = G.coalitionStatus[partyName];
+  if (!cs || cs.status === 'joined') return;
+  const party = G.parties.find(p => p.name === partyName);
+  const demands = cs.demands;
+  const distance = ideologyDistance(party);
+  const cost = ri(200000, 600000);
+
+  if (G.cash < cost) { toast('אין מספיק כסף לדיל פוליטי!', 'error'); return; }
+
+  // Red-line check: ideological distance too extreme for a viable deal
+  if (distance >= 8) {
+    toast(`${partyName} מעבר לקו האדום האידיאולוגי שלנו — דיל כמעט בלתי אפשרי!`, 'warn');
+  }
+
+  G.cash -= cost;
+
+  const portfolioMatch = cs.offeredPortfolio === demands.portfolio;
+  let successChance = 0.3 + (G.approval / 100) + (G.momentum / 30);
+  successChance += portfolioMatch ? 0.15 : -0.1;
+  successChance -= distance * 0.05; // red-line penalty
+  successChance = Math.max(0.04, Math.min(0.85, successChance));
+
+  if (Math.random() < successChance) {
+    cs.status = 'joined';
+    cs.grantedPortfolio = cs.offeredPortfolio;
+    G.coalitionSeats = G.seats + demands.minSeats;
+    addLog('coalition', `דיל פוליטי הושג עם ${partyName}! תיק שהוענק: ${cs.grantedPortfolio}. מדיניות: ${demands.policy}.`);
+    addCommentator(true, `פריצת דרך בשיחות הקואליציה — ${partyName} בפנים. ממשלה מתגבשת.`);
+    toast(`${partyName} הצטרפה לקואליציה!`, 'success');
+  } else {
+    cs.status = 'refused';
+    addLog('coalition', `${partyName} דחתה את ההצעה! ${distance >= 6 ? 'פער אידיאולוגי גדול מקשה על ההסכמה. ' : ''}הם דורשים יותר. ניסיון נוסף בהמשך.`);
+    toast(`${partyName} דחתה. נסה שוב.`, 'warn');
+  }
+  renderAll();
+}
+
+// ─── COMMENTATOR ───────────────────────────────────────────────────
+function addCommentator(positive, customText) {
+  const src = G.arena === 'IL' ? COMMENTATORS_IL : COMMENTATORS_US;
+  const c = rnd(src);
+  const text = customText || (positive ? rnd(COMMENTATOR_TEMPLATES_POS) : rnd(COMMENTATOR_TEMPLATES_NEG));
+  G.commentatorQueue.unshift({
+    name: c.name, channel: c.channel, avatar: c.avatar, text,
+    sentiment: customText ? 'neu' : (positive ? 'pos' : 'neg'),
+    time: `יום ${G.totalDays - G.daysLeft + 1}`,
+  });
+  if (G.commentatorQueue.length > 6) G.commentatorQueue = G.commentatorQueue.slice(0, 6);
+}
+
+function addCommentatorRandom() {
+  const pos = G.momentum > 0 && Math.random() > 0.4;
+  addCommentator(pos);
+}
+
+// ─── LOGGING ───────────────────────────────────────────────────────
+function addLog(type, msg) {
+  G.logEntries.unshift({type, msg, time: `יום ${G.totalDays - G.daysLeft + 1}`});
+  if (G.logEntries.length > 80) G.logEntries = G.logEntries.slice(0, 80);
+}
+
+// ─── NEWS TICKER ───────────────────────────────────────────────────
+const NEWS_ITEMS = [
+  'מרוץ הבחירות מתחמם — כל קול יכריע',
+  'סקרים: פערים קטנים בין המפלגות',
+  'מטות הקמפיין פעילים 24 שעות',
+  'הציבור הישראלי מחכה ל-X ב-X',
+  'מה יקרה ביום הבחירות?',
+  'ריבוי מפלגות מקשה על גיבוש ממשלה',
+  'פרשנים: "זוהי מערכת בחירות גורלית"',
+  'ח"כים עוזבים מפלגות, מצטרפים אחרות',
+  'קרן הבחירות של הגדולות ממלאת',
+  'יום הבוחר: המצביעים יכריעו הכל',
+];
+function startNewsTicker() {
+  const el = document.getElementById('news-scroll-text');
+  let idx = 0;
+  setInterval(() => {
+    const base = NEWS_ITEMS[idx % NEWS_ITEMS.length];
+    const from = G.logEntries[0];
+    const text = from ? `${base} | ${from.msg}` : base;
+    el.textContent = text;
+    el.style.animation = 'none';
+    el.offsetHeight; // reflow
+    el.style.animation = 'scrollnews 35s linear infinite';
+    idx++;
+  }, 8000);
+}
+
+// ─── RENDER ENGINE ─────────────────────────────────────────────────
+function renderAll() {
+  renderResources();
+  renderPartyStandings();
+  renderEconomy();
+  renderApproval();
+  renderFieldMini();
+  renderEventFeed();
+  renderPolls();
+  renderMedia();
+  renderField();
+  renderCoalition();
+  renderLog();
+  renderCommentators();
+  renderMKRoster();
+}
+
+function renderResources() {
+  document.getElementById('rc-cash').textContent = formatCash(G.cash);
+  document.getElementById('rc-days').textContent = G.daysLeft;
+  document.getElementById('rc-approval').textContent = G.approval.toFixed(1) + '%';
+  document.getElementById('rc-momentum').textContent = (G.momentum >= 0 ? '+' : '') + G.momentum.toFixed(1);
+  document.getElementById('rc-volunteers').textContent = G.volunteers.toLocaleString();
+  document.getElementById('rc-seats').textContent = G.seats;
+
+  // Chip colors
+  const cashChip = document.querySelector('#resource-ticker .resource-chip:nth-child(1)');
+  cashChip.className = 'resource-chip' + (G.cash < 500000 ? ' danger' : G.cash > 5000000 ? ' success' : '');
+  const daysChip = document.querySelector('#resource-ticker .resource-chip:nth-child(2)');
+  daysChip.className = 'resource-chip' + (G.daysLeft < 7 ? ' danger' : G.daysLeft < 15 ? ' warning' : '');
+}
+
+function renderPartyStandings() {
+  const container = document.getElementById('party-standings');
+  const total = G.parties.reduce((s, p) => s + p.strength, 0);
+  let html = '';
+  const sorted = [...G.parties].sort((a,b) => b.strength - a.strength);
+  sorted.forEach((p, i) => {
+    const isPlayer = p.name === G.playerParty.name;
+    const pct = (p.strength / total * 100).toFixed(1);
+    const seats = Math.round(p.strength / 100 * (G.arena === 'IL' ? 120 : 538));
+    const trendIcon = p.trend > 0.2 ? '↗' : p.trend < -0.2 ? '↘' : '→';
+    const trendClass = p.trend > 0.2 ? 'trend-up' : p.trend < -0.2 ? 'trend-down' : '';
+    html += `<div class="party-row" onclick="showPartyDetail('${p.name}')">
+      <div class="party-meta">
+        <span class="party-name" style="${isPlayer ? 'color:var(--neon-blue); font-weight:800;' : ''}">${isPlayer ? '▶ ' : ''}${p.name}</span>
+        <span class="party-seats" style="background:${p.color}22; color:${p.color};">${seats} מנ'</span>
+      </div>
+      <div class="party-bar-track">
+        <div class="party-bar-fill" style="width:${Math.min(100, p.strength * 3)}%; background:${p.color};"></div>
+      </div>
+      <div class="party-trend ${trendClass}">${p.strength.toFixed(1)}% ${trendIcon}</div>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function renderEconomy() {
+  document.getElementById('eco-gdp').textContent = G.gdp.toFixed(1) + '%';
+  document.getElementById('eco-inf').textContent = G.inflation.toFixed(1) + '%';
+  document.getElementById('eco-unemp').textContent = G.unemployment.toFixed(1) + '%';
+  document.getElementById('eco-rate').textContent = G.interestRate.toFixed(1) + '%';
+
+  document.getElementById('eco-gdp').parentElement.className = 'eco-cell' + (G.gdp > 3 ? ' good' : G.gdp > 1.5 ? '' : ' bad');
+  document.getElementById('eco-inf').parentElement.className = 'eco-cell' + (G.inflation < 3 ? ' good' : G.inflation > 6 ? ' bad' : ' warn');
+  document.getElementById('eco-unemp').parentElement.className = 'eco-cell' + (G.unemployment < 4 ? ' good' : G.unemployment > 8 ? ' bad' : '');
+
+  const secFill = document.getElementById('security-fill');
+  const secLabel = document.getElementById('security-label');
+  const si = G.securityIndex;
+  secFill.style.width = si + '%';
+  secFill.style.background = si < 30 ? 'var(--neon-green)' : si < 60 ? 'var(--neon-amber)' : 'var(--neon-red)';
+  secLabel.textContent = si < 25 ? 'שגרה ביטחונית' : si < 50 ? 'הסלמה מקומית' : si < 75 ? 'מתח גבוה' : 'מצב מלחמה';
+}
+
+function renderApproval() {
+  document.getElementById('big-approval').textContent = G.approval.toFixed(1) + '%';
+  document.getElementById('rc-approval').textContent = G.approval.toFixed(1) + '%';
+
+  // micro chart
+  const chart = document.getElementById('approval-micro-chart');
+  const hist = G.approvalHistory.slice(-12);
+  const max = Math.max(...hist, 40);
+  chart.innerHTML = hist.map((v, i) => {
+    const h = Math.max(4, Math.round((v / max) * 30));
+    return `<div class="micro-bar" style="height:${h}px; background:${v > G.approval - 2 ? 'var(--neon-blue)' : 'var(--text-muted)'};"></div>`;
+  }).join('');
+
+  // momentum
+  const mom = G.momentum;
+  document.getElementById('momentum-arrow').textContent = mom > 2 ? '↗' : mom < -2 ? '↘' : '→';
+  document.getElementById('momentum-val').textContent = (mom >= 0 ? '+' : '') + mom.toFixed(1);
+  document.getElementById('momentum-val').style.color = mom > 0 ? 'var(--neon-green)' : 'var(--neon-red)';
+  document.getElementById('momentum-arrow').style.color = mom > 0 ? 'var(--neon-green)' : 'var(--neon-red)';
+}
+
+function renderFieldMini() {
+  const container = document.getElementById('field-control-mini');
+  const top5 = G.cities.slice(0, 5);
+  container.innerHTML = top5.map(c => `
+    <div class="city-row" onclick="showTab('field')">
+      <div class="city-top">
+        <span class="city-name">${c.name}</span>
+        <span style="font-size:0.7rem; color:${c.support > 50 ? 'var(--neon-green)' : 'var(--neon-red)'};">${c.support}%</span>
+      </div>
+      <div class="city-support-bar">
+        <div class="city-support-fill" style="width:${c.support}%; background:${c.support > 50 ? 'var(--neon-green)' : 'var(--neon-blue)'}"></div>
+      </div>
+    </div>`).join('');
+}
+
+function renderEventFeed() {
+  const container = document.getElementById('event-feed');
+  if (G.pendingEvents.length === 0) {
+    container.innerHTML = `<div class="event-card opportunity">
+      <div class="event-title">🟢 מצב מערכת: תקין</div>
+      <div class="event-body">אין אירועים פעילים כרגע. הצוות מנהל שגרה. לחץ "יום הבא" לקידום.</div>
+    </div>`;
+    return;
+  }
+  container.innerHTML = G.pendingEvents.map(evt => `
+    <div class="event-card ${evt.type}" id="evt-${evt.id}">
+      <div class="event-title">${evt.type === 'crisis' ? '🚨' : evt.type === 'scandal' ? '📰' : evt.type === 'geopolitical' ? '🌐' : '✅'} ${evt.title}</div>
+      <div class="event-body">${evt.body}</div>
+      <div class="event-choices">
+        ${evt.choices.map((c, i) => `
+          <button class="event-btn" onclick="resolveEvent(${evt.id}, ${i})">
+            ${c.text}
+            ${c.cost ? `<span class="cost">עלות: ${formatCash(c.cost)}</span>` : ''}
+          </button>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function renderPolls() {
+  const container = document.getElementById('polls-content');
+  let html = '';
+  G.polls.forEach(poll => {
+    const sorted = [...poll.results].sort((a,b) => b.pct - a.pct);
+    html += `<div style="background:var(--bg-card); border:1px solid ${poll.internal ? 'var(--neon-purple)' : 'var(--border-dim)'}; border-radius:10px; padding:14px; margin-bottom:12px;">
+      <div style="font-weight:700; font-size:0.88rem; margin-bottom:4px; color:${poll.internal ? 'var(--neon-purple)' : 'var(--neon-blue)'};">${poll.company} ${poll.internal ? '<span class="badge badge-purple">פנימי</span>' : ''}</div>
+      <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:10px;">${poll.date} | רווח סמך 95%: ±${poll.marginOfError}%</div>
+      <table class="poll-table">
+        <tr><th>מפלגה</th><th>%</th><th>מנדטים</th><th></th></tr>
+        ${sorted.map(r => {
+          const seats = Math.round(r.pct / 100 * (G.arena === 'IL' ? 120 : 538));
+          const isPlayer = r.name === G.playerParty.name;
+          return `<tr>
+            <td style="${isPlayer ? 'font-weight:700; color:var(--neon-blue);' : ''}">${r.name}</td>
+            <td><b>${r.pct}%</b></td>
+            <td>${seats}</td>
+            <td><div class="party-bar-track" style="width:80px;"><div class="party-bar-fill" style="width:${Math.min(100, r.pct*3)}%; background:${r.color};"></div></div></td>
+          </tr>`;
+        }).join('')}
+      </table>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+const DEMO_LABELS = {
+  IL: {orthodox:'ציבור חרדי', secular:'ציבור חילוני', arab:'ציבור ערבי', workingClass:'מעמד עובד', suburban:'תושבי פרברים'},
+  US: {evangelical:'אוונגליסטים', urban:'תושבי ערים', hispanic:'קהילה היספנית', africanAmerican:'קהילה אפרו-אמריקאית', suburban:'תושבי פרברים'},
+};
+
+function launchMicroTargetedAd(demoKey) {
+  const cost = 220000;
+  if (G.cash < cost) { toast('אין מספיק תקציב לקמפיין ממוקד!', 'error'); return; }
+  G.cash -= cost;
+  const label = DEMO_LABELS[G.arena][demoKey];
+  let totalWeight = 0;
+  G.cities.forEach(c => {
+    const w = (c.demographics[demoKey] || 0) / 100;
+    if (w > 0.05) {
+      const boost = w * ri(3, 8);
+      c.support = clamp(c.support + boost, 0, 100);
+      totalWeight += w;
+    }
+  });
+  const approvalBoost = clamp((totalWeight / Math.max(1, G.cities.length)) * 25, 0.3, 3);
+  G.approval = clamp(G.approval + approvalBoost, 3, 60);
+  G.momentum = clamp(G.momentum + 1, -10, 15);
+  G.mediaCenter.ads++;
+  addLog('media', `קמפיין דיגיטלי ממוקד (Micro-Targeting) הושק לקהל ה${label}. תמיכה עלתה באזורים הרלוונטיים.`);
+  addCommentator(true, `מטה הקמפיין משיק פרסום ממוקד-דיוק לקהל ה${label} — אסטרטגיה דיגיטלית מתוחכמת.`);
+  toast(`פרסום ממוקד ל${label} הושק! +${approvalBoost.toFixed(1)}% תמיכה`, 'success');
+  renderAll();
+}
+
+function distributeFundsToCity(amount) {
+  const sel = document.getElementById('field-city-select');
+  if (!sel || !sel.value) { toast('בחר אזור להקצאת תקציב', 'error'); return; }
+  const city = G.cities.find(c => c.name === sel.value);
+  if (!city) return;
+  if (G.cash < amount) { toast('אין מספיק תקציב!', 'error'); return; }
+  G.cash -= amount;
+  const boost = (amount / 100000) * rf(1.5, 3);
+  city.support = clamp(city.support + boost, 0, 100);
+  city.volunteers += Math.round(amount / 1000);
+  addLog('field', `${formatCash(amount)} הוקצו ישירות ל${city.name}. תמיכה מקומית ומתנדבים עלו.`);
+  toast(`תקציב של ${formatCash(amount)} הוקצה ל${city.name}!`, 'success');
+  renderAll();
+}
+
+function renderMedia() {
+  const container = document.getElementById('media-content');
+  const resolved = G.resolvedEvents.filter(e => e.type === 'scandal' || e.type === 'crisis').slice(0,5);
+  const demoKeys = Object.keys(DEMO_LABELS[G.arena]);
+  container.innerHTML = `
+    <div style="margin-bottom:16px;">
+      <div class="action-category-title">📡 מעקב מדיה</div>
+      <div class="eco-grid" style="margin-bottom:12px;">
+        <div class="eco-cell"><span class="eco-val">${G.mediaCenter.pressConfs}</span><span class="eco-label">כנסי עיתונאים</span></div>
+        <div class="eco-cell"><span class="eco-val">${G.mediaCenter.tvInterviews}</span><span class="eco-label">ראיונות</span></div>
+        <div class="eco-cell ${G.activeScandalLevel > 3 ? 'bad' : 'good'}"><span class="eco-val">${G.activeScandalLevel.toFixed(1)}</span><span class="eco-label">רמת שערורייה</span></div>
+        <div class="eco-cell"><span class="eco-val">${G.mediaCenter.ads}</span><span class="eco-label">קמפיינים</span></div>
+      </div>
+      <div class="action-category-title">🎯 פרסום ממוקד-דיוק (Micro-Targeting)</div>
+      <div style="font-size:0.78rem; color:var(--text-dim); margin-bottom:10px;">בחר קבוצת יעד דמוגרפית להשקת קמפיין דיגיטלי ממוקד — עלות ₪220,000 לכל קמפיין.</div>
+      <div class="action-grid" style="margin-bottom:18px;">
+        ${demoKeys.map(key => `<button class="action-btn" onclick="launchMicroTargetedAd('${key}')">
+          <span class="aicon">📱</span>
+          <span class="aname">${DEMO_LABELS[G.arena][key]}</span>
+          <span class="acost">₪220,000</span>
+          <span class="aeffect">פרסום ממוקד לפי דמוגרפיה</span>
+        </button>`).join('')}
+      </div>
+      ${resolved.length ? `<div class="action-category-title">📋 אירועי מדיה אחרונים</div>` : ''}
+      ${resolved.map(e => `<div style="background:var(--bg-input); border-radius:8px; padding:10px; margin-bottom:8px; font-size:0.8rem;">
+        <b style="color:var(--neon-amber);">${e.title}</b><br>
+        <span style="color:var(--text-muted);">בחירתנו: ${e.chosenText}</span>
+      </div>`).join('')}
+    </div>`;
+}
+
+function renderField() {
+  const container = document.getElementById('field-content');
+  let citySelectHtml;
+  if (G.arena === 'US') {
+    const byState = {};
+    G.cities.forEach(c => { (byState[c.state] = byState[c.state] || []).push(c); });
+    citySelectHtml = Object.keys(byState).map(state =>
+      `<optgroup label="${state}">${byState[state].map(c => `<option value="${c.name}">${c.name} (${c.support}%)</option>`).join('')}</optgroup>`
+    ).join('');
+  } else {
+    citySelectHtml = G.cities.map(c => `<option value="${c.name}">${c.name} (${c.support}%)</option>`).join('');
+  }
+  let html = `<div class="eco-grid" style="margin-bottom:16px;">
+    <div class="eco-cell"><span class="eco-val">${G.volunteers.toLocaleString()}</span><span class="eco-label">מתנדבים</span></div>
+    <div class="eco-cell"><span class="eco-val">${G.cities.reduce((s,c)=>s+c.branches,0)}</span><span class="eco-label">סניפים</span></div>
+    <div class="eco-cell"><span class="eco-val">${G.fieldOps.rallies}</span><span class="eco-label">עצרות</span></div>
+    <div class="eco-cell"><span class="eco-val">${G.cities.filter(c=>c.support>50).length}</span><span class="eco-label">${G.arena === 'IL' ? 'ערים מובילות' : 'מחוזות מובילים'}</span></div>
+  </div>
+  <div class="action-category-title">💸 הקצאת תקציב קמפיין לאזור</div>
+  <div style="background:var(--bg-card); border:1px solid var(--border-dim); border-radius:10px; padding:14px; margin-bottom:18px;">
+    <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:6px;">בחר ${G.arena === 'IL' ? 'עיר' : 'מחוז'} יעד:</label>
+    <select id="field-city-select" style="width:100%; padding:10px; margin-bottom:10px; background:var(--bg-input); color:var(--text-main); border:1px solid var(--border-dim); border-radius:8px;">
+      ${citySelectHtml}
+    </select>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+      <button class="btn-sm" onclick="distributeFundsToCity(100000)">${formatCash(100000)}</button>
+      <button class="btn-sm" onclick="distributeFundsToCity(250000)">${formatCash(250000)}</button>
+      <button class="btn-sm" onclick="distributeFundsToCity(500000)">${formatCash(500000)}</button>
+    </div>
+  </div>
+  <div class="action-category-title">🗺️ מפת שטח מלאה (${G.cities.length} ${G.arena === 'IL' ? 'יישובים' : 'מחוזות'})</div>
+  <div class="city-grid">`;
+  G.cities.forEach(c => {
+    html += `<div class="city-row" onclick="showCityModal('${c.name}')">
+      <div class="city-top">
+        <span class="city-name">${c.name}</span>
+        <span class="city-pop">${c.pop.toLocaleString()}</span>
+      </div>
+      <div class="city-trend">${c.trend} ${c.branches ? `| 🏢 ${c.branches} סניפ` : ''}</div>
+      <div class="city-support-bar">
+        <div class="city-support-fill" style="width:${c.support}%; background:${c.support > 50 ? 'var(--neon-green)' : c.support > 35 ? 'var(--neon-blue)' : 'var(--neon-red)'};"></div>
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
+function renderCoalition() {
+  const container = document.getElementById('coalition-content');
+  const target = G.arena === 'IL' ? 61 : 270;
+  const joined = G.parties.filter(p => G.coalitionStatus[p.name]?.status === 'joined');
+  const totalCoalitionSeats = G.seats + joined.reduce((s,p) => s + Math.round(p.strength/100*(G.arena==='IL'?120:538)), 0);
+  const progress = Math.min(100, (totalCoalitionSeats / target) * 100);
+
+  let html = `<div style="background:var(--bg-card); border:1px solid var(--border-dim); border-radius:10px; padding:16px; margin-bottom:16px;">
+    <div style="font-weight:700; margin-bottom:8px;">יעד: ${target} מנדטים לממשלה</div>
+    <div class="party-bar-track" style="height:12px;">
+      <div class="party-bar-fill" style="width:${progress}%; background:${progress >= 100 ? 'var(--neon-green)' : 'var(--neon-blue)'};"></div>
+    </div>
+    <div style="font-size:0.8rem; color:var(--text-dim); margin-top:6px;">${totalCoalitionSeats} / ${target} מנדטים ${totalCoalitionSeats >= target ? '✅ רוב !' : ''}</div>
+  </div>
+  <div class="coalition-grid">`;
+
+  G.parties.forEach((p, i) => {
+    if (i === G.playerPartyIndex) return;
+    const cs = G.coalitionStatus[p.name];
+    if (!cs) return;
+    const seats = Math.round(p.strength/100*(G.arena==='IL'?120:538));
+    const statusMap = {negotiating:'status-negotiating',joined:'status-joined',refused:'status-refused',pending:'status-pending'};
+    const labelMap = {negotiating:'🔵 מגעים',joined:'✅ בקואליציה',refused:'❌ סירב',pending:'⏳ ממתין'};
+    const distance = ideologyDistance(p);
+    const redLine = distance >= 8;
+    const cautionLine = distance >= 6 && distance < 8;
+
+    html += `<div class="coalition-row" style="${redLine ? 'border-color:var(--neon-red);' : cautionLine ? 'border-color:var(--neon-amber);' : ''}">
+      <div class="party-header">
+        <span class="party-hname" style="color:${p.color};">${p.name}</span>
+        <span class="party-hseats" style="color:${p.color};">${seats} מנ'</span>
+      </div>
+      <div class="demands">
+        דורשים: <span>${cs.demands.portfolio}</span> + <span>${cs.demands.policy}</span>
+      </div>
+      <div style="font-size:0.72rem; margin-bottom:8px; color:${redLine ? 'var(--neon-red)' : cautionLine ? 'var(--neon-amber)' : 'var(--text-muted)'};">
+        מרחק אידיאולוגי: ${distance.toFixed(0)}/10 ${redLine ? '🚫 חוצה קו אדום!' : cautionLine ? '⚠️ פער מתח גבוה' : '✅ סביר'}
+      </div>
+      ${cs.status !== 'joined' ? `<div style="margin-bottom:8px;">
+        <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:3px;">תיק להצעה:</label>
+        <select onchange="setOfferedPortfolio('${p.name}', this.value)" style="width:100%; padding:6px 8px; font-size:0.78rem; background:var(--bg-input); color:var(--text-main); border:1px solid var(--border-dim); border-radius:6px;">
+          ${CABINET_PORTFOLIOS.map(pf => `<option value="${pf}" ${cs.offeredPortfolio === pf ? 'selected' : ''}>${pf}${pf === cs.demands.portfolio ? ' ★ מבוקש' : ''}</option>`).join('')}
+        </select>
+      </div>` : `<div style="font-size:0.75rem; color:var(--neon-green); margin-bottom:8px;">תיק שהוענק: ${cs.grantedPortfolio || cs.demands.portfolio}</div>`}
+      <div class="coalition-controls">
+        <span class="coaltion-status-badge ${statusMap[cs.status]}">${labelMap[cs.status]}</span>
+        ${cs.status !== 'joined' ? `<button class="btn-negotiate" onclick="negotiateCoalition('${p.name}')" ${G.cash < 200000 ? 'disabled' : ''}>
+          ${cs.status === 'refused' ? '🔄 נסה שוב' : '💬 דיל פוליטי'}
+        </button>` : ''}
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
+function renderLog() {
+  const container = document.getElementById('log-feed');
+  container.innerHTML = G.logEntries.map(entry => `
+    <div class="log-entry">
+      <span class="log-time">${entry.time}</span>
+      <span class="log-tag ${entry.type}">${entry.type === 'event' ? 'אירוע' : entry.type === 'media' ? 'מדיה' : entry.type === 'field' ? 'שטח' : entry.type === 'coalition' ? 'קואל' : entry.type === 'economy' ? 'כלכלה' : 'ביטחון'}</span>
+      <span class="log-msg">${entry.msg}</span>
+    </div>`).join('');
+}
+
+function renderCommentators() {
+  const container = document.getElementById('commentator-feed');
+  container.innerHTML = G.commentatorQueue.map(c => `
+    <div class="comment-card">
+      <div class="comment-meta">
+        <div class="comment-avatar">${c.avatar}</div>
+        <div>
+          <div class="comment-name">${c.name}</div>
+          <div class="comment-channel">${c.channel} | ${c.time}</div>
+        </div>
+      </div>
+      <div class="comment-text">${c.text}</div>
+      <span class="comment-sentiment sentiment-${c.sentiment}">${c.sentiment === 'pos' ? '👍 חיובי' : c.sentiment === 'neg' ? '👎 שלילי' : '⚖️ ניטרלי'}</span>
+    </div>`).join('');
+}
+
+function renderMKRoster() {
+  const container = document.getElementById('mk-roster');
+  const display = G.mkList.slice(0, 18);
+  container.innerHTML = `<div class="mk-list">
+    ${display.map(mk => `
+      <div class="mk-card" onclick="showMKDetail(${mk.id})">
+        <div class="mk-header">
+          <span class="mk-name">${mk.name}</span>
+          <span class="mk-party-badge" style="border-color:${mk.partyColor}; color:${mk.partyColor};">${mk.party.slice(0,6)}</span>
+        </div>
+        <div class="mk-role">${mk.role}</div>
+        <div class="mk-stats">
+          <span class="mk-stat">כריזמה: <span>${mk.charisma}</span></span>
+          <span class="mk-stat">מדיה: <span>${mk.mediaSavvy}</span></span>
+          <span class="mk-stat">נאמנות: <span style="color:${mk.loyalty > 80 ? 'var(--neon-green)' : mk.loyalty > 60 ? 'var(--neon-amber)' : 'var(--neon-red)'};">${mk.loyalty}%</span></span>
+        </div>
+        <div class="loyalty-bar-mini"><div class="loyalty-fill" style="width:${mk.loyalty}%; background:${mk.loyalty > 80 ? 'var(--neon-green)' : 'var(--neon-amber)'}"></div></div>
+      </div>`).join('')}
+    <div style="text-align:center; padding:8px; font-size:0.75rem; color:var(--text-muted);">+ ${G.mkList.length - 18} ${G.arena === 'IL' ? 'ח"כים נוספים' : 'נציגים נוספים'}</div>
+  </div>`;
+  const titleEl = document.getElementById('mk-roster-title');
+  if (titleEl) titleEl.textContent = G.arena === 'IL' ? 'רשימת ח"כים נבחרים' : 'רשימת נציגי קונגרס נבחרים';
+}
+
+// ─── TAB SYSTEM ────────────────────────────────────────────────────
+function showTab(tab) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.ctab').forEach(b => b.classList.remove('active'));
+  const panel = document.getElementById(`tab-${tab}`);
+  if (panel) panel.classList.add('active');
+  const btn = document.querySelector(`.ctab[data-tab="${tab}"]`);
+  if (btn) btn.classList.add('active');
+}
+
+// ─── MODALS ────────────────────────────────────────────────────────
+function showModal(type, data) {
+  const overlay = document.getElementById('modal-overlay');
+  const title = document.getElementById('modal-title');
+  const body = document.getElementById('modal-body');
+  const actions = document.getElementById('modal-actions');
+
+  if (type === 'coalition') {
+    title.textContent = '🤝 ממשקת הקואליציה';
+    body.innerHTML = 'עבור לטאב "קואליציה" לניהול מגעים מלאים.';
+    actions.innerHTML = `<button class="btn-modal-primary" onclick="showTab('coalition'); closeModal()">פתח קואליציה</button><button class="btn-modal-cancel" onclick="closeModal()">סגור</button>`;
+  } else if (type === 'party') {
+    const p = G.parties.find(x => x.name === data);
+    if (!p) return;
+    title.textContent = `📊 ${p.name}`;
+    const seats = Math.round(p.strength/100*(G.arena==='IL'?120:538));
+    body.innerHTML = `<div class="eco-grid">
+      <div class="eco-cell"><span class="eco-val" style="color:${p.color};">${p.strength.toFixed(1)}%</span><span class="eco-label">עמדה</span></div>
+      <div class="eco-cell"><span class="eco-val">${seats}</span><span class="eco-label">מנדטים</span></div>
+      <div class="eco-cell"><span class="eco-val">${p.ideology}</span><span class="eco-label">אידיאולוגיה (1-10)</span></div>
+    </div>
+    <p style="margin-top:12px; font-size:0.85rem; color:var(--text-dim);">מגמה: ${p.trend > 0.2 ? '↗ עולה' : p.trend < -0.2 ? '↘ יורדת' : '→ יציבה'}</p>`;
+    actions.innerHTML = `<button class="btn-modal-cancel" onclick="closeModal()">סגור</button>`;
+  } else if (type === 'mk') {
+    const mk = G.mkList.find(m => m.id === data);
+    if (!mk) return;
+    title.textContent = `👤 ${mk.name}`;
+    body.innerHTML = `<div style="margin-bottom:12px; font-size:0.85rem; color:var(--text-dim);">${mk.role} | ${mk.party}</div>
+    <div class="eco-grid">
+      <div class="eco-cell"><span class="eco-val">${mk.charisma}</span><span class="eco-label">כריזמה</span></div>
+      <div class="eco-cell"><span class="eco-val">${mk.mediaSavvy}</span><span class="eco-label">מדיה-סאוי</span></div>
+      <div class="eco-cell"><span class="eco-val">${mk.loyalty}%</span><span class="eco-label">נאמנות</span></div>
+      <div class="eco-cell"><span class="eco-val">${mk.influence}</span><span class="eco-label">השפעה</span></div>
+    </div>
+    ${mk.historyBadge ? `<div style="margin-top:10px;"><span class="badge badge-purple">${mk.historyBadge}</span></div>` : ''}`;
+    actions.innerHTML = `<button class="btn-modal-cancel" onclick="closeModal()">סגור</button>`;
+  } else if (type === 'city') {
+    const city = G.cities.find(c => c.name === data);
+    if (!city) return;
+    title.textContent = `📍 ${city.name}`;
+    body.innerHTML = `<div class="eco-grid" style="margin-bottom:12px;">
+      <div class="eco-cell"><span class="eco-val">${city.pop.toLocaleString()}</span><span class="eco-label">אוכלוסייה</span></div>
+      <div class="eco-cell"><span class="eco-val">${city.support}%</span><span class="eco-label">תמיכה בנו</span></div>
+      <div class="eco-cell"><span class="eco-val">${city.volunteers}</span><span class="eco-label">מתנדבים</span></div>
+      <div class="eco-cell"><span class="eco-val">${city.branches}</span><span class="eco-label">סניפים</span></div>
+    </div>
+    <div style="font-size:0.82rem; color:var(--text-dim);">מגמה פוליטית: ${city.trend}</div>`;
+    actions.innerHTML = `
+      <button class="btn-modal-primary" onclick="cityAction('rally','${city.name}')">🎉 עצרת (₪400K)</button>
+      <button class="btn-modal-primary" onclick="cityAction('branch','${city.name}')">🏢 סניף (₪500K)</button>
+      <button class="btn-modal-cancel" onclick="closeModal()">סגור</button>`;
+  }
+
+  overlay.classList.add('open');
+}
+
+function cityAction(type, cityName) {
+  if (type === 'rally') doAction('rally');
+  else if (type === 'branch') doAction('office');
+  closeModal();
+  renderAll();
+}
+
+function showPartyDetail(name) { showModal('party', name); }
+function showMKDetail(id) { showModal('mk', id); }
+function showCityModal(name) { showModal('city', name); }
+
+function closeModal(event) {
+  if (event && event.target !== document.getElementById('modal-overlay')) return;
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+// ─── TOAST SYSTEM ──────────────────────────────────────────────────
+function toast(msg, type = 'info') {
+  const container = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  const icons = {success:'✅', error:'❌', info:'ℹ️', warn:'⚠️'};
+  el.innerHTML = `<span>${icons[type]}</span>${msg}`;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+// ─── ELECTION RESULTS ──────────────────────────────────────────────
+function runElection() {
+  // Final noise on each party
+  const finalParties = G.parties.map(p => {
+    const finalNoise = rf(-1.5, 1.5);
+    return {
+      ...p,
+      finalStrength: Math.max(0.5, p.strength + finalNoise),
+    };
+  }).sort((a,b) => b.finalStrength - a.finalStrength);
+
+  const totalSeats = G.arena === 'IL' ? 120 : 538;
+  const totalPct = finalParties.reduce((s,p) => s + p.finalStrength, 0);
+  finalParties.forEach(p => {
+    p.finalSeats = Math.round((p.finalStrength / totalPct) * totalSeats);
+  });
+
+  // Show results
+  document.getElementById('game-screen').style.display = 'none';
+  document.getElementById('results-screen').style.display = 'block';
+
+  const winner = finalParties[0];
+  const playerResult = finalParties.find(p => p.name === G.playerParty.name);
+  const playerRank = finalParties.indexOf(playerResult) + 1;
+
+  document.getElementById('results-title').textContent =
+    playerRank === 1 ? `🏆 ניצחון! ${G.playerParty.name} מובילה!` :
+    playerRank <= 3 ? `🥈 תוצאה טובה! מקום ${playerRank}` :
+    `📊 תוצאות הבחירות`;
+
+  document.getElementById('results-subtitle').textContent =
+    `${G.playerParty.name} קיבלה ${playerResult.finalStrength.toFixed(1)}% ו-${playerResult.finalSeats} מנדטים. ` +
+    (playerRank === 1 ? 'אתה המפלגה הגדולה ביותר! גיבוש קואליציה יתחיל.' : `מובילה: ${winner.name} עם ${winner.finalSeats} מנדטים.`);
+
+  const colors = ['gold','silver','bronze'];
+  document.getElementById('results-grid').innerHTML = finalParties.map((p, i) => {
+    const isPlayer = p.name === G.playerParty.name;
+    return `<div class="result-party-row" style="${isPlayer ? 'border:2px solid var(--neon-blue); box-shadow:var(--glow-blue)' : ''}">
+      <div class="result-rank ${colors[i] || ''}">${i + 1}</div>
+      <div class="result-party-name" style="color:${p.color};">${p.name}</div>
+      <div class="result-pct" style="color:${p.color};">${p.finalStrength.toFixed(1)}%</div>
+      <div class="result-seats">${p.finalSeats} מנ'</div>
+      <div class="result-bar-track">
+        <div class="result-bar-fill" style="width:${Math.min(100, p.finalStrength * 3)}%; background:${p.color};"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── SETUP SCREEN ──────────────────────────────────────────────────
+function showSetup() {
+  document.getElementById('results-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'none';
+  document.getElementById('setup-screen').style.display = 'flex';
+  // reset state
+  G.currentTurn = 0; G.logEntries = []; G.commentatorQueue = [];
+  G.pendingEvents = []; G.resolvedEvents = [];
+  G.approvalHistory = [];
+}
+
+// ─── INIT ──────────────────────────────────────────────────────────
+window.onload = function() {
+  G.arena = 'IL';
+  populateYearSelect();
+};
+</script>
+</body>
+</html>
